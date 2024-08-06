@@ -119,8 +119,6 @@ const ProductController = {
         })
         .populate({
           path: 'color_id',
-          select: 'name',
-          select: 'codeColor',
         })
         .populate({
           path: 'size_id',
