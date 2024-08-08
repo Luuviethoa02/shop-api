@@ -187,7 +187,7 @@ const AuthController = {
         data,
       })
     } catch (error) {
-      return res.status(500)
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR)
     }
   },
 

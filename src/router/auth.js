@@ -1,7 +1,7 @@
 const express = require('express')
 const AuthController = require('../controller/authController.js')
-const MiddlewareController = require('../controller/middlewareController.js')
 const authorization = require('../middleware/auth.js')
+const Authorization = require('../middleware/auth.js')
 const router = express.Router()
 
 //users-register
@@ -13,7 +13,7 @@ router.post('/login', AuthController.loginUser)
 router.get('/check', AuthController.checkUser)
 
 //users-get
-router.get('/me', AuthController.getUser)
+router.get('/me',Authorization, AuthController.getUser)
 
 router.get('/getAll', AuthController.getAllUsers)
 
