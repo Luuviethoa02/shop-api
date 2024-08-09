@@ -29,6 +29,7 @@ const AuthController = {
         return res.json({
           statusCode: StatusCodes.BAD_REQUEST,
           message: message,
+          data: null,
         })
       }
 
@@ -95,7 +96,8 @@ const AuthController = {
           .json(
             formatResponse(
               StatusCodes.UNAUTHORIZED,
-              'Tài khoản không tồn tại !'
+              'Tài khoản không tồn tại !',
+              null,
             )
           )
       }
@@ -111,7 +113,8 @@ const AuthController = {
           .json(
             formatResponse(
               StatusCodes.UNAUTHORIZED,
-              'Mật khẩu không chính xác !'
+              'Mật khẩu không chính xác !',
+              null,
             )
           )
       }

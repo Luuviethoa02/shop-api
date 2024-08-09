@@ -1,10 +1,10 @@
 const jwt = require('jsonwebtoken')
 
-const formatResponse = (code, message, data = undefined) => {
+const formatResponse = (code, message, data = null) => {
   return {
-    code,
+    statusCode:code,
     message,
-    data,
+    data:data,
   }
 }
 
