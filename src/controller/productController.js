@@ -2,7 +2,6 @@ const { StatusCodes, ReasonPhrases } = require('http-status-codes')
 
 const { formatResponse } = require('../helpers/index.js')
 const ProductModel = require('../models/productModel.js')
-const ProductDetailModel = require('../models/productDetailModel.js')
 
 const slugify = require('slugify')
 
