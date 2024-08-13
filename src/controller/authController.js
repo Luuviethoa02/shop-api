@@ -184,11 +184,7 @@ const AuthController = {
     try {
       const user = await UserModel.findOne({ _id: req.user.id })
       const { password, ...data } = user._doc
-      return res.status(StatusCodes.OK).json({
-        statusCode: StatusCodes.OK,
-        message: 'đọc thông tin người dùng thành công',
-        data,
-      })
+      return res.status(StatusCodes.OK).json(data)
     } catch (error) {
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR)
     }

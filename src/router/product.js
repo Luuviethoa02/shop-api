@@ -1,20 +1,34 @@
 const express = require('express')
+const cloudinary = require('cloudinary').v2
+const fileUpload = require('express-fileupload')
 const ProductController = require('../controller/productController.js')
-const multer = require('multer')
-const Authorization = require('../middleware/auth.js')
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, './src/uploads')
-  },
-  filename: function (req, file, cb) {
-    if (file.originalname) {
-      cb(null, file.originalname)
-    }
-  },
-})
-
-const upload = multer({ storage: storage })
 const router = express.Router()
+
+router.use(fileUpload({
+  useTempFiles: true,  // Lưu file tạm thời trên server trước khi upload
+  tempFileDir: '../products/', // Đường dẫn lưu file tạm thời
+}))
+
+// Middleware xử lý upload nhiều ảnh
+const uploadMultipleImages = async (req, res, next) => {
+  try {
+    const files = req.files.images 
+    if (!files) {
+      return res.status(400).json({ message: "No files were uploaded." })
+    }
+    const uploadPromises = files.map(file =>
+      cloudinary.uploader.upload(file.tempFilePath, {
+        folder: 'products',
+      })
+    )
+    const results = await Promise.all(uploadPromises)
+    console.log(results);
+    req.body.images = results.map(result => result.secure_url)
+    next()
+  } catch (error) {
+    res.status(500).json({ message: 'Upload failed', error })
+  }
+}
 
 //get all product
 router.get('/', ProductController.getAllProducts)
@@ -22,21 +36,14 @@ router.get('/detail/:id', ProductController.getProudctDetailById)
 //add product
 router.post(
   '/add',
-  upload.single('avt'),
+  uploadMultipleImages,
   ProductController.addProduct
 )
 
-const checkUploadCondition = (req, res, next) => {
-  if (req.file) {
-    req.body.avt = req.file.originalname
-  }
-  next()
-}
+
 
 router.put(
   '/edit/:id',
-  upload.single('avt'),
-  checkUploadCondition,
   ProductController.editProduct
 )
 
