@@ -2,7 +2,6 @@ const { StatusCodes, ReasonPhrases } = require('http-status-codes')
 
 const { formatResponse } = require('../helpers/index.js')
 const ProductModel = require('../models/productModel.js')
-const ProductDetailModel = require('../models/productDetailModel.js')
 
 const slugify = require('slugify')
 
@@ -43,17 +42,20 @@ const ProductController = {
     }
   },
   addProduct: async (req, res, next) => {
+
+    console.log(req.body);
+    
     const name = req.body.name
-    const avt = req.file.originalname
+    const images = req.body.images
     const brandId = req.body.brand_id
-    const sizes = JSON.parse(req.body.size_id)
-    const colors = JSON.parse(req.body.color_id)
+    const sizes = req.body.size_id
+    const colors = req.body.color_id
     const price = req.body.price
     const des = req.body.des
     try {
       const Product = new ProductModel({
         name: name,
-        avt: avt,
+        images: images,
         brand_id: brandId,
         size_id: sizes,
         color_id: colors,
