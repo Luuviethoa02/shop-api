@@ -15,34 +15,42 @@ const schema = new mongoose.Schema(
       ref: 'brands',
       required: true,
     },
-    size_id: [
+    sizes: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'sizes',
-        required: true,
+        name:{
+          type:String,
+          require
+        },
+        weight:{
+          type:String,
+          require
+        }
       },
     ],
-    color_id: [
+    colors: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'colors',
-        required: true,
+        name:{
+          type:String,
+          require
+        },
+        image:{
+          type:String,
+          require
+        },
       },
     ],
     des: {
       type: String,
       default: '',
     },
+    publish: {
+      type: Boolean,
+      default: false,
+    },
     slug: {
       type: String,
       require: true,
     },
-    images: [
-      {
-        type: String,
-        require: true,
-      },
-    ],
   },
   { timestamps: true }
 )

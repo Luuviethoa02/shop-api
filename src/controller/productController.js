@@ -42,26 +42,11 @@ const ProductController = {
     }
   },
   addProduct: async (req, res, next) => {
-
     console.log(req.body);
-    
-    const name = req.body.name
-    const images = req.body.images
-    const brandId = req.body.brand_id
-    const sizes = req.body.size_id
-    const colors = req.body.color_id
-    const price = req.body.price
-    const des = req.body.des
     try {
       const Product = new ProductModel({
-        name: name,
-        images: images,
-        brand_id: brandId,
-        size_id: sizes,
-        color_id: colors,
-        price: price,
-        des: des,
-        slug: slugify(name, { lower: true, upper: true }),
+        ...req.body,
+        slug: slugify(req.body.name, { lower: true, upper: true }),
       })
       const resProduct = await Product.save()
       return res.status(StatusCodes.OK).json({
