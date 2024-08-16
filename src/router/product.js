@@ -12,19 +12,27 @@ router.use(fileUpload({
 // Middleware xử lý upload nhiều ảnh
 const uploadMultipleImages = async (req, res, next) => {
   try {
-    const files = req.files.images 
-    if (!files) {
-      return res.status(400).json({ message: "No files were uploaded." })
+    console.log(req.body);
+    const colors = req.body.colors;
+    if (!colors || colors.length === 0) {
+      return res.status(400).json({ message: "No colors were provided." });
     }
-    const uploadPromises = files.map(file =>
-      cloudinary.uploader.upload(file.tempFilePath, {
+
+    const uploadPromises = colors.map(async (color) => {
+      const file = color.image[0]; 
+      const result = await cloudinary.uploader.upload(file.tempFilePath, {
         folder: 'products',
-      })
-    )
-    const results = await Promise.all(uploadPromises)
-    console.log(results);
-    req.body.images = results.map(result => result.secure_url)
-    next()
+      });
+      return {
+        name: color.name, 
+        image: result.secure_url, 
+      };
+    });
+
+    const uploadedColors = await Promise.all(uploadPromises);
+    req.body.colors = uploadedColors; 
+
+    next();
   } catch (error) {
     res.status(500).json({ message: 'Upload failed', error })
   }
