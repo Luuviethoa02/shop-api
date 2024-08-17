@@ -29,8 +29,7 @@ const BrandController = {
         strict: true,
       })
       const newBrand = new BrandModel({
-        name: req.body.name,
-        img_cover: req.file.originalname,
+       ...req.body,
         slug: slug,
       })
       const result = await newBrand.save()
