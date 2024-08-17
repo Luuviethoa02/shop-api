@@ -16,16 +16,6 @@ const ProductController = {
       const products = await ProductModel.find()
         .populate({
           path: 'brand_id',
-          select: 'name',
-        })
-        .populate({
-          path: 'color_id',
-          select: 'name',
-          select: 'codeColor',
-        })
-        .populate({
-          path: 'size_id',
-          select: 'name',
         })
         .skip(skip)
         .limit(limit)
@@ -42,7 +32,7 @@ const ProductController = {
     }
   },
   addProduct: async (req, res, next) => {
-    console.log(req.body);
+    console.log(req.body)
     try {
       const Product = new ProductModel({
         ...req.body,
@@ -97,26 +87,17 @@ const ProductController = {
     }
   },
   getProudctDetailById: async (req, res, next) => {
-    const id_product = req.params.id
     try {
-      const productDetail = await ProductModel.findOne({ _id: id_product })
-        .populate({
-          path: 'brand_id',
-          select: 'name',
-        })
-        .populate({
-          path: 'color_id',
-        })
-        .populate({
-          path: 'size_id',
-          select: 'name',
-        })
-      const productImage = await ProductDetailModel.findOne({
-        product_id: id_product,
+      const productDetail = await ProductModel.findOne({
+        slug: req.params.slug,
+      }).populate({
+        path: 'brand_id',
+        select: 'name',
+        selected: 'img_cover',
       })
 
-      const brandSome = await ProductModel.find({
-        brand_id: productDetail.brand_id._id,
+      const productSimilars = await ProductModel.find({
+        brand_id: productDetail.brand_id,
       })
 
       return res.status(StatusCodes.OK).json({
@@ -124,9 +105,7 @@ const ProductController = {
         message: 'Lấy chi tiết sản phẩm thành công',
         data: {
           productDetail,
-          productImage: productImage ? productImage.imgs : [],
-          brandSomething:
-            brandSome.filter((product) => product._id !== id_product) || [],
+          productSimilars,
         },
       })
     } catch (error) {
