@@ -42,7 +42,7 @@ cloudinary.config({
 app.use(
   cors({
     credentials: true,
-    origin: ['http://localhost:3000', 'https://shopvh.netlify.app'],
+    origin: ['http://localhost:3000', 'https://shopvh.netlify.app','https://shop-blue-theta.vercel.app'],
   })
 )
 
