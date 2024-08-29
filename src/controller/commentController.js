@@ -1,4 +1,4 @@
-const CommentModel = require('../models/commentModel')
+const CommentsModel = require("../models/commentModel")
 
 const CommentController = {
   addComments: async (req, res) => {
@@ -7,7 +7,7 @@ const CommentController = {
       const io = req.io
 
       // Tạo và lưu bình luận mới
-      const newComment = new CommentModel({
+      const newComment = new CommentsModel({
         userId,
         productId,
         comment: commentText,
@@ -18,7 +18,7 @@ const CommentController = {
       await newComment.save()
 
       // Tìm tất cả các bình luận liên quan đến sản phẩm
-      const existingComments = await CommentModel.find({ productId })
+      const existingComments = await CommentsModel.find({ productId })
 
       // Hàm xử lý thông báo và gửi socket
       const handleNotifications = async () => {
