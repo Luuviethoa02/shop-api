@@ -13,7 +13,7 @@ router.post('/login', AuthController.loginUser)
 router.get('/check', AuthController.checkUser)
 
 //users-get
-router.get('/me',Authorization, AuthController.getUser)
+router.get('/me', Authorization, AuthController.getUser)
 
 router.get('/getAll', AuthController.getAllUsers)
 

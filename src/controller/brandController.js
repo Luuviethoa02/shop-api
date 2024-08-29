@@ -29,7 +29,7 @@ const BrandController = {
         strict: true,
       })
       const newBrand = new BrandModel({
-       ...req.body,
+        ...req.body,
         slug: slug,
       })
       const result = await newBrand.save()
@@ -45,11 +45,17 @@ const BrandController = {
     }
   },
   getBrandById: async (req, res, next) => {
-    const id_brand = req.params.id
-    //:6570b89d467d7d916cf4eba3
     try {
-      const brand = await BrandModel.findById(id_brand)
-      res.status(200).json(brand)
+      const brand = await BrandModel.find({ slug: req.params.slug })
+      setTimeout(() => {
+        return res.status(StatusCodes.OK).json({
+          code: StatusCodes.OK,
+          message: 'Lấy chi tiết danh mục thành công',
+          data: {
+            categories: brand,
+          },
+        })
+      }, 5000)
     } catch (err) {
       res.status(500).json(err)
     }

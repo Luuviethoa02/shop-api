@@ -33,7 +33,7 @@ const uploadImage = async (req, res, next) => {
 //get all brand
 router.get('/', BrandController.getAllBrand)
 //add brand
-router.get('/detail/:id', BrandController.getBrandById)
+router.get('/detail/:slug', BrandController.getBrandById)
 router.post(
   '/add',
   uploadImage,

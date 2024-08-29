@@ -32,7 +32,6 @@ const ProductController = {
     }
   },
   addProduct: async (req, res, next) => {
-    console.log(req.body)
     try {
       const Product = new ProductModel({
         ...req.body,
@@ -95,19 +94,20 @@ const ProductController = {
         select: 'name',
         selected: 'img_cover',
       })
-
       const productSimilars = await ProductModel.find({
         brand_id: productDetail.brand_id,
       })
 
-      return res.status(StatusCodes.OK).json({
-        code: StatusCodes.OK,
-        message: 'Lấy chi tiết sản phẩm thành công',
-        data: {
-          productDetail,
-          productSimilars,
-        },
-      })
+      setTimeout(() => {
+        return res.status(StatusCodes.OK).json({
+          code: StatusCodes.OK,
+          message: 'Lấy chi tiết sản phẩm thành công',
+          data: {
+            productDetail,
+            productSimilars,
+          },
+        })
+      }, 5000)
     } catch (error) {
       return res
         .status(StatusCodes.INTERNAL_SERVER_ERROR)
