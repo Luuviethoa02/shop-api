@@ -1,6 +1,6 @@
 const CommentsModel = require("../models/commentModel")
 
-const CommentController = {
+const CommentsController = {
   addComments: async (req, res) => {
     try {
       const { userId, productId, commentText, rating } = req.body
@@ -74,4 +74,4 @@ const CommentController = {
   },
 }
 
-module.exports = CommentController
+module.exports = CommentsController
