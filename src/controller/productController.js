@@ -76,6 +76,29 @@ const ProductController = {
 
     return res.json('dsfs')
   },
+  editColorProduct: async () =>{
+    const id = req.params.id
+    const colors = JSON.parse(req.body.colors)
+    try {
+      const ress = await ProductModel
+    } catch (error) {
+      return ress.status(500).json(error)
+    }
+  },
+  updateImageColorProduct: async (req, res, next) => {
+    const colorId = req.params.id
+    const image = req.body.image
+    const productId = req.body.productId
+    try {
+      const ress = await ProductModel.findOneAndUpdate(
+        { _id: productId, 'colors._id': colorId },
+        { $set: { 'colors.$.image': image } }
+      )
+      return res.status(200).json({ message: 'cập nhật ảnh màu thành công', ress })
+    } catch (err) {
+      return res.status(500).json(err)
+    }
+  },
   deleteProduct: async (req, res, next) => {
     const product_id = req.params.id
     try {
@@ -107,7 +130,41 @@ const ProductController = {
             productSimilars,
           },
         })
-      }, 5000)
+      }, 2000)
+    } catch (error) {
+      return res
+        .status(StatusCodes.INTERNAL_SERVER_ERROR)
+        .json(ReasonPhrases.INTERNAL_SERVER_ERROR)
+    }
+  },
+  getProudctDetailByIdSeller: async (req, res, next) => {
+    try {
+      const page = parseInt(req.query.page, 10) || 1
+      const limit = parseInt(req.query.limit, 10) || 2
+      const skip = (page - 1) * limit
+      const sellerId = req.params.sellerId
+      const total = await ProductModel.find({ sellerId })
+        .countDocuments()
+        .exec()
+
+      const productDetail = await ProductModel.find({
+        sellerId,
+      })
+        .populate({
+          path: 'brand_id',
+        })
+        .skip(skip)
+        .limit(limit)
+        .exec()
+
+      setTimeout(() => {
+        return res.status(StatusCodes.OK).json({
+          page,
+          limit,
+          total,
+          data: productDetail,
+        })
+      }, 2000)
     } catch (error) {
       return res
         .status(StatusCodes.INTERNAL_SERVER_ERROR)

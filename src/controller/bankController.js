@@ -1,63 +1,136 @@
+const config = require("./config");
+const axios = require('axios');
+const crypto = require('crypto');
+
+
 const BankController = {
-  main: (req, res, next) => {
-    var ipAddr =
-      req.headers['x-forwarded-for'] ||
-      req.connection.remoteAddress ||
-      req.socket.remoteAddress ||
-      req.connection.socket.remoteAddress
-
-    var config = require('config')
-    var dateFormat = require('dateformat')
-
-    var tmnCode = config.get('vnp_TmnCode')
-    var secretKey = config.get('vnp_HashSecret')
-    var vnpUrl = config.get('vnp_Url')
-    var returnUrl = config.get('vnp_ReturnUrl')
-
-    var date = new Date()
-
-    var createDate = dateFormat(date, 'yyyymmddHHmmss')
-    var orderId = dateFormat(date, 'HHmmss')
-    var amount = req.body.amount
-    var bankCode = req.body.bankCode
-
-    var orderInfo = req.body.orderDescription
-    var orderType = req.body.orderType
-    var locale = req.body.language
-    if (locale === null || locale === '') {
-      locale = 'vn'
+  main: async (req, res, next) => {
+    let {
+      accessKey,
+      secretKey,
+      orderInfo,
+      partnerCode,
+      redirectUrl,
+      ipnUrl,
+      requestType,
+      extraData,
+      orderGroupId,
+      autoCapture,
+      lang,
+    } = config;
+  
+    var amount = '10000';
+    var orderId = partnerCode + new Date().getTime();
+    var requestId = orderId;
+  
+    var rawSignature =
+      'accessKey=' +
+      accessKey +
+      '&amount=' +
+      amount +
+      '&extraData=' +
+      extraData +
+      '&ipnUrl=' +
+      ipnUrl +
+      '&orderId=' +
+      orderId +
+      '&orderInfo=' +
+      orderInfo +
+      '&partnerCode=' +
+      partnerCode +
+      '&redirectUrl=' +
+      redirectUrl +
+      '&requestId=' +
+      requestId +
+      '&requestType=' +
+      requestType;
+  
+    //signature
+    var signature = crypto
+      .createHmac('sha256', secretKey)
+      .update(rawSignature)
+      .digest('hex');
+  
+    //json object send to MoMo endpoint
+    const requestBody = JSON.stringify({
+      partnerCode: partnerCode,
+      partnerName: 'Test',
+      storeId: 'MomoTestStore',
+      requestId: requestId,
+      amount: amount,
+      orderId: orderId,
+      orderInfo: orderInfo,
+      redirectUrl: redirectUrl,
+      ipnUrl: ipnUrl,
+      lang: lang,
+      requestType: requestType,
+      autoCapture: autoCapture,
+      extraData: extraData,
+      orderGroupId: orderGroupId,
+      signature: signature,
+    });
+  
+    // options for axios
+    const options = {
+      method: 'POST',
+      url: 'https://test-payment.momo.vn/v2/gateway/api/create',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(requestBody),
+      },
+      data: requestBody,
+    };
+  
+    // Send the request and handle the response
+    let result;
+    try {
+      result = await axios(options);
+      return res.status(200).json(result.data);
+    } catch (error) {
+      return res.status(500).json({ statusCode: 500, message: error.message });
     }
-    var currCode = 'VND'
-    var vnp_Params = {}
-    vnp_Params['vnp_Version'] = '2.1.0'
-    vnp_Params['vnp_Command'] = 'pay'
-    vnp_Params['vnp_TmnCode'] = tmnCode
-    // vnp_Params['vnp_Merchant'] = ''
-    vnp_Params['vnp_Locale'] = locale
-    vnp_Params['vnp_CurrCode'] = currCode
-    vnp_Params['vnp_TxnRef'] = orderId
-    vnp_Params['vnp_OrderInfo'] = orderInfo
-    vnp_Params['vnp_OrderType'] = orderType
-    vnp_Params['vnp_Amount'] = amount * 100
-    vnp_Params['vnp_ReturnUrl'] = returnUrl
-    vnp_Params['vnp_IpAddr'] = ipAddr
-    vnp_Params['vnp_CreateDate'] = createDate
-    if (bankCode !== null && bankCode !== '') {
-      vnp_Params['vnp_BankCode'] = bankCode
-    }
-
-    vnp_Params = sortObject(vnp_Params)
-
-    var querystring = require('qs')
-    var signData = querystring.stringify(vnp_Params, { encode: false })
-    var crypto = require('crypto')
-    var hmac = crypto.createHmac('sha512', secretKey)
-    var signed = hmac.update(new Buffer(signData, 'utf-8')).digest('hex')
-    vnp_Params['vnp_SecureHash'] = signed
-    vnpUrl += '?' + querystring.stringify(vnp_Params, { encode: false })
-
-    res.redirect(vnpUrl)
   },
+  callback: async (req, res, next) => {
+    console.log("callback:::::",req.body);
+    return res.json({ statusCode: 200, message: 'success' });
+  },
+  checkStatusTransaction: async (req, res, next) => {
+    
+    const { orderId } = req.body;
+
+    // const signature = accessKey=$accessKey&orderId=$orderId&partnerCode=$partnerCode
+    // &requestId=$requestId
+    var secretKey = 'K951B6PE1waDMi640xX08PD3vg6EkVlz';
+    var accessKey = 'F8BBA842ECF85';
+    const rawSignature = `accessKey=${accessKey}&orderId=${orderId}&partnerCode=MOMO&requestId=${orderId}`;
+  
+    const signature = crypto
+      .createHmac('sha256', secretKey)
+      .update(rawSignature)
+      .digest('hex');
+  
+    const requestBody = JSON.stringify({
+      partnerCode: 'MOMO',
+      requestId: orderId,
+      orderId: orderId,
+      signature: signature,
+      lang: 'vi',
+    });
+  
+    // options for axios
+    const options = {
+      method: 'POST',
+      url: 'https://test-payment.momo.vn/v2/gateway/api/query',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      data: requestBody,
+    };
+  
+    const result = await axios(options);
+  
+    return res.status(200).json(result.data);
+  }
 }
 
 module.exports = BankController

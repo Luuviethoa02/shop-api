@@ -1,9 +1,6 @@
 const UserModel = require('../models/userModel.js')
-const bcrypt = require('bcrypt')
 
 const UserController = {
-
-
   getUsersById: async (req, res) => {
     try {
       const user_id = req.params.id

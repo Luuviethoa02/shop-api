@@ -47,6 +47,43 @@ const AuthController = {
     }
   },
 
+  registerGoole: async (req, res) => {
+    try {
+      let userFind = await UserModel.findOne({
+        email: req.body.email,
+      }).populate('sellerId')
+      const { accessToken, refreshToken } = gennarateToken(userFind)
+      if (!userFind) {
+        const user = new UserModel({
+          username: req.body.username,
+          email: req.body.email,
+          img: req.body.img,
+          loginGoogle: true,
+        })
+        const userResponse = await user.save()
+        const data = {
+          jwt: { accessToken, refreshToken },
+          user: userResponse,
+        }
+        return res
+          .status(StatusCodes.OK)
+          .json(formatResponse(StatusCodes.OK, 'Đăng nhập thành công', data))
+      }
+      const data = {
+        jwt: { accessToken, refreshToken },
+        user: userFind,
+      }
+      return res
+        .status(StatusCodes.OK)
+        .json(formatResponse(StatusCodes.OK, 'Đăng nhập thành công', data))
+    } catch (error) {
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        message: error.message || 'Invalid request from server',
+        statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+      })
+    }
+  },
+
   refereshToken: async (req, res) => {
     const requestrefreshToken = req.body.refreshToken
     if (!requestrefreshToken) {
@@ -88,7 +125,9 @@ const AuthController = {
   loginUser: async (req, res) => {
     try {
       const email = req.body.email
-      const user = await UserModel.findOne({ email: email })
+      const user = await UserModel.findOne({ email: email }).populate(
+        'sellerId'
+      )
 
       if (!user) {
         return res
@@ -97,7 +136,7 @@ const AuthController = {
             formatResponse(
               StatusCodes.UNAUTHORIZED,
               'Tài khoản không tồn tại !',
-              null,
+              null
             )
           )
       }
@@ -114,7 +153,7 @@ const AuthController = {
             formatResponse(
               StatusCodes.UNAUTHORIZED,
               'Mật khẩu không chính xác !',
-              null,
+              null
             )
           )
       }
@@ -124,7 +163,7 @@ const AuthController = {
         const { password, ...userResponse } = user._doc
         const data = {
           jwt: { accessToken, refreshToken },
-          user:userResponse,
+          user: userResponse,
         }
         return res
           .status(StatusCodes.OK)
@@ -139,44 +178,6 @@ const AuthController = {
             err.message || 'Invalid request from server'
           )
         )
-    }
-  },
-  //CHECK USER
-  CheckUser: async (req, res) => {
-    try {
-      const message = {}
-      const email = req.body.email
-      const user = await UserModel.findOne({ email: email })
-
-      if (!user) {
-        message.name = 'Tài khoản chưa tồn tại !'
-        return res.status(401).json(message)
-      }
-
-      const validPassword = await bcrypt.compare(
-        req.body.password,
-        user.password
-      )
-
-      if (!validPassword) {
-        message.name = 'Mật khẩu không chính xác !'
-        return res.status(401).json(message)
-      }
-
-      if (user && validPassword) {
-        const accessToken = AuthController.handleCreateAcesstoken(user)
-
-        message.name = 'Đăng nhập thành công !'
-        res.cookie('jwt', accessToken, {
-          maxAge: 24 * 60 * 60 * 1000,
-          secure: true,
-          sameSite: 'None',
-        })
-
-        return res.status(200).json({ accessToken, message })
-      }
-    } catch (err) {
-      return res.status(500).json(err)
     }
   },
   //GET USER
