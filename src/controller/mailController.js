@@ -1,6 +1,9 @@
 var nodemailer = require('nodemailer')
 const UserModel = require('../models/userModel.js')
 const jwt = require('jsonwebtoken')
+const { StatusCodes } = require('http-status-codes')
+
+
 const MailController = {
   generateRandomNumbers() {
     const randomNumbers = []
@@ -11,6 +14,27 @@ const MailController = {
     const result = randomNumbers.join('  ')
     return result
   },
+  emailTemplate: (code) => `
+  <div style="background-color: #f9f9f9; padding: 20px; font-family: Arial, sans-serif;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border: 1px solid #ddd;">
+      <div style="text-align: center;">
+        <img alt="Shopvh" src="/imgs/logo.png" alt="Logo" style="max-width: 150px; margin-bottom: 20px;" />
+      </div>
+      <h2 style="color: #333;">Mã xác thực của bạn</h2>
+      <p style="font-size: 16px; color: #555;">
+        Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi. Dưới đây là mã xác thực của bạn:
+      </p>
+      <div style="text-align: center; margin: 20px 0;">
+        <span style="display: inline-block; background-color: #F97316; color: white; padding: 10px 20px; font-size: 24px; border-radius: 5px;">
+          ${code}
+        </span>
+      </div>
+      <p style="font-size: 14px; color: #777;">
+        Mã xác thực này có hiệu lực trong vòng 10 phút. Nếu bạn không yêu cầu mã này, vui lòng bỏ qua email này.
+      </p>
+    </div>
+  </div>
+`,
   handleCreateAcesstoken: (code) => {
     const accessToken = jwt.sign(
       {
@@ -48,8 +72,8 @@ const MailController = {
           var mailOptions = {
             from: process.env.EMAIL,
             to: email,
-            subject: 'SHOP.CO mã code xác thực !',
-            text: `Mã xác thực của bạn là: ${code}`,
+            subject: 'SHOP.CO - mã code xác thực !',
+            html: MailController.emailTemplate(code),
           }
           transporter.sendMail(mailOptions, function (error, info) {
             if (error) {
@@ -60,7 +84,11 @@ const MailController = {
           })
           message.name = 'Gửi Mail thành công'
           message.accessTokenCode = MailController.handleCreateAcesstoken(code)
-          return res.status(200).json(message)
+          return res.status(StatusCodes.OK).json({
+            statusCode:StatusCodes.OK,
+            message: message.name,
+            data: message.accessTokenCode
+          })
         } catch (error) {
           return res.status(500).json(error)
         }

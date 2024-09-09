@@ -10,7 +10,6 @@ const schema = new mongoose.Schema(
     username: {
       type: String,
       require: true,
-      unique: true,
     },
     email: {
       type: String,
@@ -20,7 +19,7 @@ const schema = new mongoose.Schema(
     },
     password: {
       type: String,
-      require: true,
+      require: false,
     },
     img: {
       type: String,
@@ -30,7 +29,21 @@ const schema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    //createdAt , updatedAt
+    loginGoogle:{
+      type: Boolean,
+      default: false,
+    },
+    sellerId:{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'sellers',
+      default: null,
+    },
+    status: {
+      type: String,
+      enum: ['valid', 'invalid'],
+      default: 'valid'
+    },
+    
   },
   { timestamps: true }
 )

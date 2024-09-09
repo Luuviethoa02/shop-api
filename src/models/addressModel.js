@@ -2,7 +2,19 @@ const mongoose = require('mongoose')
 
 const schema = new mongoose.Schema(
   {
-    username: {
+    name: {
+      type: String,
+      require: true,
+    },
+    city:{
+      type: String,
+      require: true,
+    },
+    district:{
+      type: String,
+      require: true,
+    },
+    ward:{
       type: String,
       require: true,
     },
@@ -10,7 +22,7 @@ const schema = new mongoose.Schema(
       type: String,
       require: true,
     },
-    detail: {
+    address: {
       type: String,
       require: true,
     },
@@ -19,7 +31,7 @@ const schema = new mongoose.Schema(
       require: true,
       default: false,
     },
-    user_id: {
+    userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'users',
       required: true,

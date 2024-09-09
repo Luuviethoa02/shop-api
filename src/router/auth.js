@@ -1,11 +1,11 @@
 const express = require('express')
 const AuthController = require('../controller/authController.js')
-const authorization = require('../middleware/auth.js')
 const Authorization = require('../middleware/auth.js')
 const router = express.Router()
 
 //users-register
 router.post('/register', AuthController.registerUser)
+router.post('/login-google', AuthController.registerGoole)
 
 //users-login
 router.post('/login', AuthController.loginUser)

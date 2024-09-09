@@ -39,6 +39,11 @@ const schema = new mongoose.Schema(
         },
       },
     ],
+    status:{
+      type: String,
+      enum: ['active', 'inactive'],
+      default: 'active',
+    },
     des: {
       type: String,
       default: '',
@@ -46,6 +51,15 @@ const schema = new mongoose.Schema(
     publish: {
       type: Boolean,
       default: false,
+    },
+    sellerId:{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'sellers',
+      required: true
+    },
+    likes:{
+      type: Number,
+      default: 0
     },
     slug: {
       type: String,
