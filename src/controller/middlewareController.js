@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken')
-const UserModel = require('../models/userModel')
+const UserModel = require('../models/userModel.js')
 const bcrypt = require('bcrypt')
 
 const MiddlewareController = {
