@@ -19,7 +19,6 @@ const schema = new mongoose.Schema({
     rating: {
       type: Number, // Thay đổi kiểu dữ liệu nếu cần
       required: true, // Bắt buộc phải có rating
-      unique : false
     },
     createdAt: { 
       type: Date, 
