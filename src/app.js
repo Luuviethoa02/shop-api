@@ -25,8 +25,8 @@ const io = socketIo(server, {
   cors: {
     origin: [
       'http://localhost:3000',
-      'https://shopvh.netlify.app',
       'https://shop-blue-theta.vercel.app',
+      'https://shop-vh.vercel.app/',
     ],
     methods: ['GET', 'POST'],
     credentials: true,
@@ -39,8 +39,8 @@ app.use(
     credentials: true,
     origin: [
       'http://localhost:3000',
-      'https://shopvh.netlify.app',
       'https://shop-blue-theta.vercel.app',
+      'https://shop-vh.vercel.app/'
     ],
   })
 )
