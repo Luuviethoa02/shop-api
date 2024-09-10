@@ -26,7 +26,7 @@ const io = socketIo(server, {
     origin: [
       'http://localhost:3000',
       'https://shop-blue-theta.vercel.app',
-      'https://shop-vh.vercel.app/',
+      'https://shop-vh.vercel.app',
     ],
     methods: ['GET', 'POST'],
     credentials: true,
@@ -40,7 +40,7 @@ app.use(
     origin: [
       'http://localhost:3000',
       'https://shop-blue-theta.vercel.app',
-      'https://shop-vh.vercel.app/'
+      'https://shop-vh.vercel.app'
     ],
   })
 )
