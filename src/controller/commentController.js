@@ -1,8 +1,8 @@
 const { StatusCodes } = require('http-status-codes')
-const CommentsModel = require('../models/commentModel')
+const CommentsModel = require('../models/commentsModel.js')
 const { formatDistanceToNow } = require('date-fns')
 const { vi } = require('date-fns/locale')
-const UserModel = require('../models/userModel')
+const UserModel = require('../models/userModel.js')
 
 const CommentsController = {
   addComments: async (req, res) => {

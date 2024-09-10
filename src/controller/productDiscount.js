@@ -1,5 +1,5 @@
 const { StatusCodes } = require('http-status-codes')
-const ProductDiscountModel = require('../models/productDiscount')
+const ProductDiscountModel = require('../models/productDiscount.js')
 const { formatResponse } = require('../helpers')
 const ProductDiscountController = {
   getAddressBy: async (req, res, next) => {
