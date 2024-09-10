@@ -52,7 +52,6 @@ const AuthController = {
       let userFind = await UserModel.findOne({
         email: req.body.email,
       }).populate('sellerId')
-      const { accessToken, refreshToken } = gennarateToken(userFind)
       if (!userFind) {
         const user = new UserModel({
           username: req.body.username,
@@ -60,6 +59,7 @@ const AuthController = {
           img: req.body.img,
           loginGoogle: true,
         })
+        const { accessToken, refreshToken } = gennarateToken(user)
         const userResponse = await user.save()
         const data = {
           jwt: { accessToken, refreshToken },
@@ -69,6 +69,8 @@ const AuthController = {
           .status(StatusCodes.OK)
           .json(formatResponse(StatusCodes.OK, 'Đăng nhập thành công', data))
       }
+
+      const { accessToken, refreshToken } = gennarateToken(userFind)
       const data = {
         jwt: { accessToken, refreshToken },
         user: userFind,
