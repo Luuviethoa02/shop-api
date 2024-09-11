@@ -49,24 +49,7 @@ const ProductController = {
   },
   editProduct: async (req, res, next) => {
     const id = req.params.id
-    const avt = req.body.avt
-    const name = req.body.name
-    const priceNew = parseInt(req.body.price)
-    const priceOld = req.body.price_old == '' ? 0 : parseInt(req.body.price_old)
-    const brandId = req.body.brand_id
-    const sizes = JSON.parse(req.body.sizes)
-    const colors = JSON.parse(req.body.colors)
-    const des = req.body.des
-    const dataUpdated = {
-      name: name,
-      avt: avt,
-      price: priceNew,
-      price_old: priceOld,
-      des: des,
-      brand_id: brandId,
-      size_id: sizes,
-      color_id: colors,
-    }
+    const dataUpdated = req.body
     try {
       const ress = await ProductModel.findOneAndUpdate({ _id: id }, dataUpdated)
       return res.json({ message: 'cập nhật sản phẩm thành công', ress })
@@ -76,13 +59,44 @@ const ProductController = {
 
     return res.json('dsfs')
   },
-  editColorProduct: async () =>{
-    const id = req.params.id
-    const colors = JSON.parse(req.body.colors)
+  editColorProduct: async (req, res) => {
+    const colorId = req.params.id
+    const productId = req.body.productId
+    const dataUpdated = req.body
+
     try {
-      const ress = await ProductModel
+      // Tìm sản phẩm trước khi cập nhật
+      const product = await ProductModel.findOne({
+        _id: productId,
+        'colors._id': colorId,
+      })
+
+      // Kiểm tra nếu sản phẩm hoặc màu không tồn tại
+      if (!product) {
+        return res.status(StatusCodes.NOT_FOUND).json({
+          message: 'Sản phẩm hoặc màu sắc không tồn tại',
+          statusCode: StatusCodes.NOT_FOUND,
+        })
+      }
+
+      // Tìm màu cần cập nhật
+      const color = product.colors.id(colorId)
+
+      // Cập nhật các trường có sự thay đổi
+      if (dataUpdated.name) color.name = dataUpdated.name
+      if (dataUpdated.quantity) color.quantity = dataUpdated.quantity
+      if (dataUpdated.image) color.image = dataUpdated.image
+
+      // Lưu lại sản phẩm sau khi đã cập nhật
+      await product.save()
+
+      return res.status(StatusCodes.OK).json({
+        message: 'Cập nhật màu sản phẩm thành công',
+        statusCode: StatusCodes.OK,
+        color: product, // Trả về màu đã được cập nhật
+      })
     } catch (error) {
-      return ress.status(500).json(error)
+      return res.status(500).json({ error: error.message })
     }
   },
   updateImageColorProduct: async (req, res, next) => {
@@ -94,7 +108,9 @@ const ProductController = {
         { _id: productId, 'colors._id': colorId },
         { $set: { 'colors.$.image': image } }
       )
-      return res.status(200).json({ message: 'cập nhật ảnh màu thành công', ress })
+      return res
+        .status(200)
+        .json({ message: 'cập nhật ảnh màu thành công', ress })
     } catch (err) {
       return res.status(500).json(err)
     }
@@ -171,17 +187,6 @@ const ProductController = {
         .json(ReasonPhrases.INTERNAL_SERVER_ERROR)
     }
   },
-
-  // getBrandById : async(req, res,next) => {
-  //   const id_brand =  req.params.id;
-  //   //:6570b89d467d7d916cf4eba3
-  //   try {
-  //     const brand = await BrandModel.findById(id_brand)
-  //     res.status(200).json(brand)
-  //   } catch (err) {
-  //     res.status(500).json(err)
-  //   }
-  // },
 }
 
 module.exports = ProductController

@@ -1,6 +1,16 @@
 const { StatusCodes } = require('http-status-codes')
 const DiscountModel = require('../models/discountCode')
+const voucherCodes = require('voucher-code-generator')
+
 const DiscountController = {
+  createCode: () => {
+    const codes = voucherCodes.generate({
+      length: 8,
+      count: 1,
+      charset: 'alphanumeric',
+    })
+    return codes
+  },
   getDiscountBy: async (req, res, next) => {
     try {
       const user_id = req.params.id
@@ -14,35 +24,114 @@ const DiscountController = {
       return res.status(500).json(err)
     }
   },
-  getAllDiscount: async (req, res, next) => {
+
+  addActiveDiscountProduct: async (req, res, next) => {
     try {
-      const DiscountFinds = await DiscountModel.find()
-      if (DiscountFinds) {
-        return res.status(200).json(DiscountFinds)
-      } else {
-        return res.status(200).json({ error: 'no Discount' })
-      }
+      const discountId = req.params.discountId
+      const ress = await DiscountModel.findByIdAndUpdate(
+        discountId,
+        {
+          $set: { is_active: 'active' },
+        },
+        { new: true }
+      )
+      setTimeout(() => {
+        return res.status(StatusCodes.OK).json({
+          code: StatusCodes.OK,
+          message: 'Kích hoạt mã giảm giá thành công',
+          data: ress,
+        })
+      }, 3000)
     } catch (err) {
-      return res.status(500).json(err)
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(err)
     }
   },
-  addDiscount: async (req, res, next) => {
+
+  addDiscount: async (req, res) => {
     try {
-      const newDiscount = new DiscountModel({
-        discount_code: req.body.discount_code,
-        discount_percent: req.body.discount_percent,
-        description: req.body.description,
-        start_date: req.body.start_date,
-        end_date: req.body.end_date,
-      })
+      const voucherCode = DiscountController.createCode()
+      const data = {
+        ...req.body,
+        discount_code: voucherCode[0],
+      }
+      const newDiscount = new DiscountModel(data)
       const result = await newDiscount.save()
-      res.status(StatusCodes.OK).json({
-        code: StatusCodes.OK,
-        message: 'Thêm mã giảm giá thành công',
-        data: result,
-      })
+      setTimeout(() => {
+        return res.status(StatusCodes.OK).json({
+          code: StatusCodes.OK,
+          message: 'Tạo mã giảm giá thành công',
+          data: result,
+        })
+      }, 7000)
     } catch (err) {
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(err)
+    }
+  },
+  addDiscountProduct: async (req, res, next) => {
+    try {
+      const productIds = req.body.productIds
+      const discountId = req.params.discountId
+      const ress = await DiscountModel.findByIdAndUpdate(
+        discountId,
+        {
+          $push: { productIds: { $each: productIds } }, // Dùng $each để thêm từng phần tử của mảng productIds
+        },
+        { new: true } // Tùy chọn để trả về document đã được cập nhật
+      )
+      return res.status(StatusCodes.OK).json({
+        code: StatusCodes.OK,
+        message: 'Thêm sản phẩm vào mã giảm giá thành công',
+        data: ress,
+      })
+    } catch (err) {
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(err)
+    }
+  },
+  removeDiscountProduct: async (req, res, nex) => {
+    try {
+      const productIds = req.body.productIds
+      const discountId = req.params.discountId
+      const ress = await DiscountModel.findByIdAndUpdate(
+        discountId,
+        {
+          $pull: { productIds: { $in: productIds } }, // Dùng $in để xóa các phần tử có trong mảng productIds
+        },
+        { new: true } // Tùy chọn để trả về document đã được cập nhật
+      )
+      return res.status(StatusCodes.OK).json({
+        code: StatusCodes.OK,
+        message: 'Xóa sản phẩm khỏi mã giảm giá thành công',
+        data: ress,
+      })
+    } catch (err) {
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(err)
+    }
+  },
+  getDiscountBySellerId: async (req, res) => {
+    try {
+      const page = parseInt(req.query.page, 10) || 1
+      const limit = parseInt(req.query.limit, 10) || 10
+      const skip = (page - 1) * limit
+      const sellerId = req.params.sellerId
+
+      const total = await DiscountModel.find({ sellerId })
+        .countDocuments()
+        .exec()
+
+      const DiscountFinds = await DiscountModel.find({ sellerId })
+        .populate({ path: 'productIds' })
+        .skip(skip)
+        .limit(limit)
+        .exec()
+
+      return res.status(StatusCodes.OK).json({
+        page,
+        limit,
+        total,
+        data: DiscountFinds,
+      })
+    } catch (err) {
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(err)
     }
   },
   updateDiscount: async (req, res) => {

@@ -17,29 +17,33 @@ const schema = new mongoose.Schema(
     },
     sizes: [
       {
-        name:{
-          type:String,
-          require
+        name: {
+          type: String,
+          require,
         },
-        weight:{
-          type:String,
-          require
-        }
+        weight: {
+          type: String,
+          require,
+        },
       },
     ],
     colors: [
       {
-        name:{
-          type:String,
-          require
+        name: {
+          type: String,
+          require,
         },
-        image:{
-          type:String,
-          require
+        image: {
+          type: String,
+          require,
+        },
+        quantity: {
+          type: Number,
+          default: 0,
         },
       },
     ],
-    status:{
+    status: {
       type: String,
       enum: ['active', 'inactive'],
       default: 'active',
@@ -52,14 +56,14 @@ const schema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    sellerId:{
+    sellerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'sellers',
-      required: true
+      required: true,
     },
-    likes:{
+    likes: {
       type: Number,
-      default: 0
+      default: 0,
     },
     slug: {
       type: String,

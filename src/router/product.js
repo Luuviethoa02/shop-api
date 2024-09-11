@@ -41,6 +41,7 @@ const uploadMultipleImages = async (req, res, next) => {
         const index = key.match(/colors\[(\d+)\]\.name/)[1]
         colors[index] = colors[index] || {}
         colors[index].name = req.body[`colors[${index}].name`]
+        colors[index].quantity = req.body[`colors[${index}].quantity`]
       }
     }
 
@@ -62,6 +63,7 @@ const uploadMultipleImages = async (req, res, next) => {
 
         uploadedColors.push({
           name: colors[colorIndex].name,
+          quantity: colors[colorIndex].quantity,
           image: result.secure_url,
         })
       }

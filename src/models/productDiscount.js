@@ -14,6 +14,11 @@ const schema = new mongoose.Schema(
       ref: 'discountCode',
       required: true,
     },
+    status:{
+      type: String,
+      enum: ['active', 'inactive'],
+      default: 'active',
+    }
   },
   { timestamps: true }
 )

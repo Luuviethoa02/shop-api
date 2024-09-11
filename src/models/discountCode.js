@@ -9,7 +9,7 @@ const schema = new mongoose.Schema(
     },
     description: {
       type: String,
-      default: '',
+      default: null,
     },
     discount_percentage: {
       type: Number,
@@ -24,10 +24,22 @@ const schema = new mongoose.Schema(
       require: true,
     },
     is_active: {
-      type: Boolean,
-      require: true,
-      default: false,
+      type: String,
+      enum: ['active', 'inactive', 'expired'],
+      default: 'inactive',
     },
+    sellerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'sellers',
+      required: true,
+    },
+    productIds: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'products',
+        default: [],
+      },
+    ],
   },
   { timestamps: true }
 )
