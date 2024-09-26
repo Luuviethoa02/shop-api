@@ -3,6 +3,7 @@ const cloudinary = require('cloudinary').v2
 const fileUpload = require('express-fileupload')
 const Authorization = require('../middleware/auth.js')
 const BrandController = require('../controller/brandController.js')
+const { updateMany } = require('../models/brandModel.js')
 
 const router = express.Router()
 
@@ -29,6 +30,21 @@ const uploadImage = async (req, res, next) => {
   }
 }
 
+const updateImage = async (req, res, next) => {
+  try {
+    if (req.files && req.files.img_cover) {
+      const file = req.files.img_cover
+      const result = await cloudinary.uploader.upload(file.tempFilePath, {
+        folder: 'brands',
+      })
+      req.body.img_cover = result.secure_url
+    }
+    next()
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
 
 //get all brand
 router.get('/', BrandController.getAllBrand)
@@ -39,5 +55,12 @@ router.post(
   uploadImage,
   BrandController.addBrand
 )
+
+router.patch(
+  '/update/:brandId',
+  updateImage,
+  BrandController.updateBrand
+)
+
 
 module.exports = router

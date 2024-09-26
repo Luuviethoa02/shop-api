@@ -7,13 +7,14 @@ const UserModel = require('../models/userModel.js')
 const CommentsController = {
   addComments: async (req, res) => {
     try {
-      const { userId, productId, commentText, rating } = req.body
+      const { userId, productId, commentText, rating,sellerId } = req.body
       const io = req.io // Lấy io từ req
 
       // Tạo và lưu bình luận mới
       const newComment = new CommentsModel({
         userId,
         productId,
+        sellerId,
         comment: commentText,
         rating,
         notifications: [],

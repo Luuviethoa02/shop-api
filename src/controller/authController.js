@@ -193,6 +193,27 @@ const AuthController = {
     }
   },
 
+  updateAvatar: async (req, res) => {
+    try {
+      const userId = req.params.userId
+      const img = req.body.img
+      const userUpdate = await UserModel.findOneAndUpdate(
+        { _id: userId },
+        {
+          img,
+        },
+        { new: true }
+      )
+
+      return res.status(StatusCodes.OK).json({
+        statusCode: StatusCodes.OK,
+        message: 'Cập nhật ảnh đại diện thành công',
+        data: userUpdate,
+      })
+    } catch (error) {
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(error)
+    }
+  },
   checkUser: async (req, res) => {
     try {
       const cookie = req.cookies['jwt']
@@ -225,17 +246,18 @@ const AuthController = {
 
   updateUser: async (req, res) => {
     try {
-      const email = req.body.email
-      const passNew = req.body.passNew
-      const salt = await bcrypt.genSalt(10)
-      const hashed = await bcrypt.hash(passNew, salt)
-      const user = await UserModel.updateOne(
-        { email: email },
-        { password: hashed }
-      )
-      res.status(200).json(user)
+      const userId = req.params.userId
+      const dataUpdate = req.body.data
+      const userUpdate = await UserModel.findOneAndUpdate(userId, dataUpdate,{
+        new:true
+      })
+      return res.status(StatusCodes.OK).json({
+        statusCode: StatusCodes.OK,
+        message: 'Cập nhật người dùng thành công',
+        data: userUpdate,
+      })
     } catch (err) {
-      res.status(500).json(err)
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(error)
     }
   },
 }

@@ -110,6 +110,8 @@ const updateImageColor = async (req, res, next) => {
 router.get('/', ProductController.getAllProducts)
 router.get('/detail/:slug', ProductController.getProudctDetailById)
 router.get('/seller/:sellerId', ProductController.getProudctDetailByIdSeller)
+router.get('/category/:slugCategory', ProductController.getProductBySlugCategory)
+router.get('/condition', ProductController.getProudctCondition)
 //add product
 router.post('/add', uploadMultipleImages, ProductController.addProduct)
 
@@ -120,6 +122,8 @@ router.put(
   updateImageColor,
   ProductController.updateImageColorProduct
 )
+router.patch('/update/:productId', ProductController.updateProduct)
+router.patch('/status/:productId', ProductController.updateProductInactive)
 
 router.delete('/delete/:id', ProductController.deleteProduct)
 

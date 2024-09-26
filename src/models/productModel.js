@@ -19,11 +19,11 @@ const schema = new mongoose.Schema(
       {
         name: {
           type: String,
-          require,
+          default: ''
         },
         weight: {
           type: String,
-          require,
+          default: ''
         },
       },
     ],
@@ -31,11 +31,9 @@ const schema = new mongoose.Schema(
       {
         name: {
           type: String,
-          require,
         },
         image: {
           type: String,
-          require,
         },
         quantity: {
           type: Number,

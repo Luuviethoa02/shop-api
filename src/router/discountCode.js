@@ -8,6 +8,8 @@ router.put('/product/add/:discountId',DiscountController.addDiscountProduct)
 router.put('/product/remove/:discountId',DiscountController.removeDiscountProduct)
 router.put('/active/:discountId',DiscountController.addActiveDiscountProduct)
 router.get('/:sellerId',DiscountController.getDiscountBySellerId)
+router.post('/info/:sellerId',DiscountController.getDiscountInfoBySellerId)
+router.delete('/:discountId',DiscountController.deleteDiscount)
 
 
 module.exports = router

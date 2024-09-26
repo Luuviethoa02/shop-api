@@ -11,6 +11,11 @@ const schema = new mongoose.Schema({
       ref: 'products',
       required: true, 
     },
+    sellerId:{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'sellers',
+      required: true
+    },
     comment: {
       type: String,
       required: true, // Bắt buộc phải có nội dung bình luận

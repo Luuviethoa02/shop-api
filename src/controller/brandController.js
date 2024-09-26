@@ -7,7 +7,7 @@ const BrandController = {
   getAllBrand: async (req, res, next) => {
     try {
       const page = parseInt(req.query.page, 10) || 1
-      const limit = parseInt(req.query.limit, 10) || 5
+      const limit = parseInt(req.query.limit, 10) || 20
       const skip = (page - 1) * limit
       const total = await BrandModel.countDocuments().exec()
 
@@ -37,6 +37,31 @@ const BrandController = {
         formatResponse({
           code: StatusCodes.OK,
           message: 'Thêm danh mục thành công',
+          data: result,
+        })
+      )
+    } catch (err) {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(err)
+    }
+  },
+  updateBrand : async (req, res) => {
+    try {
+      const slug = slugify(req.body.name, {
+        lower: true,
+        strict: true,
+      })
+      const result = await BrandModel.findByIdAndUpdate(
+        req.params.brandId,
+        {
+          ...req.body,
+          slug: slug,
+        },
+        { new: true }
+      )
+      res.status(StatusCodes.OK).json(
+        formatResponse({
+          code: StatusCodes.OK,
+          message: 'Cập nhật danh mục thành công',
           data: result,
         })
       )

@@ -1,6 +1,7 @@
 const { StatusCodes } = require('http-status-codes')
 const DiscountModel = require('../models/discountCode')
 const voucherCodes = require('voucher-code-generator')
+const { checkDateStatus } = require('../helpers/index')
 
 const DiscountController = {
   createCode: () => {
@@ -130,6 +131,69 @@ const DiscountController = {
         total,
         data: DiscountFinds,
       })
+    } catch (err) {
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(err)
+    }
+  },
+  getDiscountInfoBySellerId: async (req, res) => {
+    try {
+      const sellerId = req.params.sellerId
+      const voucherCode = req.body.voucherCode
+      const discountFind = await DiscountModel.findOne({
+        sellerId: sellerId,
+        discount_code: voucherCode,
+      })
+
+      if (!discountFind) {
+        return res.status(StatusCodes.NOT_FOUND).json({
+          statusCode: StatusCodes.NOT_FOUND,
+          message: 'Mã giảm giá không tồn tại',
+          data: discountFind,
+        })
+      }
+      if (
+        checkDateStatus(discountFind.start_date, discountFind.end_date) ===
+        'inactive'
+      ) {
+        return res.status(StatusCodes.NOT_FOUND).json({
+          statusCode: StatusCodes.NOT_FOUND,
+          message: 'Mã giảm giá không còn hoạt động',
+          data: null,
+        })
+      }
+
+      if (
+        checkDateStatus(discountFind.start_date, discountFind.end_date) ===
+        'expired'
+      ) {
+        return res.status(StatusCodes.NOT_FOUND).json({
+          statusCode: StatusCodes.NOT_FOUND,
+          message: 'Mã giảm giá đã hết hạn',
+          data: null,
+        })
+      }
+
+      return res.status(StatusCodes.OK).json({
+        statusCode: StatusCodes.OK,
+        message: 'Mã giảm giá đã được áp dụng',
+        data: discountFind,
+      })
+    } catch (error) {
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(error)
+    }
+  },
+  deleteDiscount: async function (req, res) {
+    try {
+      const discountId = req.params.discountId
+      const result = await DiscountModel.findByIdAndDelete(discountId)
+
+      setTimeout(() => {
+        return res.status(StatusCodes.OK).json({
+          code: StatusCodes.OK,
+          message: 'Xóa mã giảm giá thành công',
+          data: result,
+        })
+      }, 2000)
     } catch (err) {
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(err)
     }

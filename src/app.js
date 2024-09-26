@@ -7,15 +7,12 @@ const bodyparser = require('body-parser')
 const connectdb = require('./db/config')
 const cookieParser = require('cookie-parser')
 const path = require('path')
-const { parsePhoneNumberFromString } = require('libphonenumber-js');
 
 // Load environment variables
 dotenv.config()
 
-
 // Create the Express app
 const app = express()
-
 
 // Create an HTTP server
 const server = http.createServer(app)
@@ -40,14 +37,13 @@ app.use(
     origin: [
       'http://localhost:3000',
       'https://shop-blue-theta.vercel.app',
-      'https://shop-vh.vercel.app'
+      'https://shop-vh.vercel.app',
     ],
   })
 )
 app.use(cookieParser())
 app.use(bodyparser.urlencoded({ extended: true }))
 app.use(bodyparser.json())
-app.use(express.json())
 app.use(express.static(path.join(__dirname, 'uploads')))
 app.use(express.static('public'))
 
@@ -66,23 +62,25 @@ const oderDetailRounters = require('./router/oderDetail')
 const mailRounters = require('./router/mail')
 const commentsRounters = require('./router/comment')
 const sellerRounters = require('./router/seller')
-
+const orderNotificationRounters = require('./router/oderNotification')
 
 app.use((req, res, next) => {
   req.io = io
   next()
 })
 
-
 io.on('connection', (socket) => {
-
   // Khi người dùng tham gia vào phòng
   socket.on('join', ({ id, name }) => {
-    socket.join(id);
-    console.log(`Number of users in room ${id}`);
-  });
-});
+    socket.join(id)
+    console.log(`Number of users in room ${id}`)
+  })
 
+  socket.on('sellerJoin', ({ id, name }) => {
+    socket.join(id)
+    console.log(`seller join room ${id}`)
+  })
+})
 
 app.use('/v1/auth', authRoutes)
 app.use('/v1/auth/mail', mailRounters)
@@ -95,16 +93,7 @@ app.use('/v1/oder', oderRounters)
 app.use('/v1/oderDetail', oderDetailRounters)
 app.use('/v1/comment', commentsRounters)
 app.use('/v1/seller', sellerRounters)
-
-app.post('/callback', async (req, res) => {
-
-  console.log('callback: ');
-  console.log(req.body);
-
-  return res.status(204).json(req.body);
-});
-
-
+app.use('/v1/orderNotification', orderNotificationRounters)
 
 
 // Start the server
@@ -112,4 +101,3 @@ const port = process.env.PORT || 3000
 server.listen(port, () => {
   console.log(`Server is running on port ${port}`)
 })
-
