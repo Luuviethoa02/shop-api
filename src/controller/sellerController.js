@@ -20,16 +20,15 @@ const SellerController = {
         sellerId: resSeller._id,
       }, { new: true }).populate('sellerId');
 
-      setTimeout(() => {
-        return res.status(StatusCodes.OK).json({
-          code: 200,
-          message: 'Tạo kênh bán thành công',
-          data: {
-            seller: resSeller,
-            user: resUserUpdate,
-          },
-        })
-      }, 2000)
+      return res.status(StatusCodes.OK).json({
+        code: 200,
+        message: 'Tạo kênh bán thành công',
+        data: {
+          seller: resSeller,
+          user: resUserUpdate,
+        },
+      })
+     
     } catch (err) {
 
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(err)

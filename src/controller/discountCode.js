@@ -29,20 +29,31 @@ const DiscountController = {
   addActiveDiscountProduct: async (req, res, next) => {
     try {
       const discountId = req.params.discountId
-      const ress = await DiscountModel.findByIdAndUpdate(
+
+      const discountUpdateStatus = await DiscountModel.findById(discountId)
+
+
+      let status = checkDateStatus(
+        discountUpdateStatus.start_date,
+        discountUpdateStatus.end_date
+      )
+
+      console.log(status);
+      
+
+      const discountUpdateStatusEd = await DiscountModel.findByIdAndUpdate(
         discountId,
         {
-          $set: { is_active: 'active' },
-        },
-        { new: true }
+          $set: { is_active: status },
+          new: true,
+        }
       )
-      setTimeout(() => {
-        return res.status(StatusCodes.OK).json({
-          code: StatusCodes.OK,
-          message: 'Kích hoạt mã giảm giá thành công',
-          data: ress,
-        })
-      }, 3000)
+
+      return res.status(StatusCodes.OK).json({
+        code: StatusCodes.OK,
+        message: 'Kích hoạt mã giảm giá thành công',
+        data: discountUpdateStatusEd,
+      })
     } catch (err) {
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(err)
     }
@@ -57,13 +68,11 @@ const DiscountController = {
       }
       const newDiscount = new DiscountModel(data)
       const result = await newDiscount.save()
-      setTimeout(() => {
-        return res.status(StatusCodes.OK).json({
-          code: StatusCodes.OK,
-          message: 'Tạo mã giảm giá thành công',
-          data: result,
-        })
-      }, 7000)
+      return res.status(StatusCodes.OK).json({
+        code: StatusCodes.OK,
+        message: 'Tạo mã giảm giá thành công',
+        data: result,
+      })
     } catch (err) {
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(err)
     }
@@ -187,13 +196,11 @@ const DiscountController = {
       const discountId = req.params.discountId
       const result = await DiscountModel.findByIdAndDelete(discountId)
 
-      setTimeout(() => {
-        return res.status(StatusCodes.OK).json({
-          code: StatusCodes.OK,
-          message: 'Xóa mã giảm giá thành công',
-          data: result,
-        })
-      }, 2000)
+      return res.status(StatusCodes.OK).json({
+        code: StatusCodes.OK,
+        message: 'Xóa mã giảm giá thành công',
+        data: result,
+      })
     } catch (err) {
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(err)
     }

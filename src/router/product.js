@@ -108,6 +108,7 @@ const updateImageColor = async (req, res, next) => {
 
 //get all product
 router.get('/', ProductController.getAllProducts)
+router.get('/discount', ProductController.getAllProductsDiscount)
 router.get('/detail/:slug', ProductController.getProudctDetailById)
 router.get('/seller/:sellerId', ProductController.getProudctDetailByIdSeller)
 router.get('/category/:slugCategory', ProductController.getProductBySlugCategory)

@@ -5,13 +5,12 @@ const AddressController = {
     try {
       const user_id = req.params.id
       const addressFinds = await AddressModel.find({ userId: user_id })
-      setTimeout(() => {
-        return res.status(StatusCodes.OK).json({
-          code: StatusCodes.OK,
-          message: 'lấy địa chỉ thành công',
-          data: addressFinds,
-        })
-      }, 2000)
+      return res.status(StatusCodes.OK).json({
+        code: StatusCodes.OK,
+        message: 'lấy địa chỉ thành công',
+        data: addressFinds,
+      })
+     
     } catch (err) {
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(err)
     }

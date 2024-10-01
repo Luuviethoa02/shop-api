@@ -72,15 +72,14 @@ const BrandController = {
   getBrandById: async (req, res, next) => {
     try {
       const brand = await BrandModel.find({ slug: req.params.slug })
-      setTimeout(() => {
-        return res.status(StatusCodes.OK).json({
-          code: StatusCodes.OK,
-          message: 'Lấy chi tiết danh mục thành công',
-          data: {
-            categories: brand,
-          },
-        })
-      }, 5000)
+      return res.status(StatusCodes.OK).json({
+        code: StatusCodes.OK,
+        message: 'Lấy chi tiết danh mục thành công',
+        data: {
+          categories: brand,
+        },
+      })
+    
     } catch (err) {
       res.status(500).json(err)
     }

@@ -63,6 +63,8 @@ const mailRounters = require('./router/mail')
 const commentsRounters = require('./router/comment')
 const sellerRounters = require('./router/seller')
 const orderNotificationRounters = require('./router/oderNotification')
+const searchRouters = require('./router/search')
+const searchHistoryRouters = require('./router/searchHistory')
 
 app.use((req, res, next) => {
   req.io = io
@@ -94,6 +96,8 @@ app.use('/v1/oderDetail', oderDetailRounters)
 app.use('/v1/comment', commentsRounters)
 app.use('/v1/seller', sellerRounters)
 app.use('/v1/orderNotification', orderNotificationRounters)
+app.use('/v1/search', searchRouters)
+app.use('/v1/searchHistory', searchHistoryRouters)
 
 
 // Start the server
