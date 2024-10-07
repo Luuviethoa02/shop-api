@@ -60,7 +60,6 @@ const schema = new mongoose.Schema(
     totalPrice :{
       type: Number,
       require: true,
-
     }
   },
   { timestamps: true }

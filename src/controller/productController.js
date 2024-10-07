@@ -139,8 +139,6 @@ const ProductController = {
 
       const productDiscount = await DiscountModel.find()
 
-      console.log(productDiscount)
-
       const newProduct = await Promise.all(
         products.map(async (product) => {
           const total = await Promise.all(
@@ -223,12 +221,12 @@ const ProductController = {
       })
       const resProduct = await Product.save()
       return res.status(StatusCodes.OK).json({
-        code: 200,
+        code: StatusCodes.OK,
         message: 'Thêm sản phẩm thành công',
         data: resProduct,
       })
     } catch (err) {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(err)
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(err)
     }
   },
   editProduct: async (req, res, next) => {
@@ -323,11 +321,54 @@ const ProductController = {
         select: 'name',
         selected: 'img_cover',
       })
+
       const productSimilars = await ProductModel.find({
         brand_id: productDetail.brand_id,
       })
 
       const sellerInfo = await SellerModel.findById(productDetail.sellerId)
+
+      const productSellerTotal = await ProductModel.find({
+        sellerId: sellerInfo._id,
+      }).countDocuments()
+
+      let newSellerInfo = {
+        ...sellerInfo._doc,
+        totalProducts: productSellerTotal,
+      }
+
+      const productDiscount = await DiscountModel.find({
+        is_active: 'active',
+        productIds: { $in: [productDetail._id] },
+      })
+
+      const totalReviews = await CommentsModel.aggregate([
+        // Bước 1: Lọc các comment theo sellerId
+        {
+          $match: { sellerId: sellerInfo._id },
+        },
+        // Bước 2: Tính tổng số sao và số lượng comment
+        {
+          $group: {
+            _id: null,
+            totalStars: { $sum: '$rating' }, // Giả sử trường "rating" là số sao trong comment
+            totalComments: { $sum: 1 },
+          },
+        },
+      ])
+
+      // Kiểm tra kết quả
+      if (totalReviews.length > 0) {
+        const { totalStars, totalComments } = totalReviews[0]
+        const averageRating = totalStars / totalComments
+        newSellerInfo.totalComments = totalComments
+        newSellerInfo.averageRating = averageRating
+      } else {
+        newSellerInfo.totalComments = 0
+        newSellerInfo.averageRating = 0
+      }
+
+      productDetail.discount = productDiscount || null
 
       return res.status(StatusCodes.OK).json({
         code: StatusCodes.OK,
@@ -335,13 +376,13 @@ const ProductController = {
         data: {
           productDetail,
           productSimilars,
-          sellerInfo,
+          sellerInfo: newSellerInfo,
         },
       })
     } catch (error) {
       return res
         .status(StatusCodes.INTERNAL_SERVER_ERROR)
-        .json(ReasonPhrases.INTERNAL_SERVER_ERROR)
+        .json(ReasonPhrases.INTERNAL_SERVER_ERROR || error)
     }
   },
   getProudctDetailByIdSeller: async (req, res, next) => {
@@ -385,8 +426,8 @@ const ProductController = {
 
       let productFilter = {}
 
-      if (query?.categories && Array.isArray(query.categories)) {
-        productFilter.brand_id = { $in: query.categories }
+      if (query?.categoris && Array.isArray(query.categoris)) {
+        productFilter.brand_id = { $in: query.categoris }
       }
       if (query?.minPrice && query?.maxPrice) {
         productFilter.price = {

@@ -11,7 +11,7 @@ const SearchHistoryController = {
         { keyWords, created_by: userId }, // Điều kiện tìm kiếm
         { $inc: { count: 1 } }, // Nếu tìm thấy, tăng count lên 1
         { new: true, upsert: true, setDefaultsOnInsert: true } // Nếu không tìm thấy thì tạo mới
-      );
+      )
 
       return res.status(StatusCodes.OK).json({
         statusCode: StatusCodes.OK,
@@ -19,8 +19,8 @@ const SearchHistoryController = {
         data: updatedHistory,
       })
     } catch (err) {
-      console.log(err);
-      
+      console.log(err)
+
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(err)
     }
   },
@@ -57,7 +57,7 @@ const SearchHistoryController = {
     }
   },
   getTopSearchedKeywords: async (req, res, next) => {
-    const limit = req.query.limit || 10
+    const limit = req.query.limit || 5
     try {
       const topSearchedKeywords = await SearchHistoryModel.aggregate([
         {
@@ -86,7 +86,6 @@ const SearchHistoryController = {
   deleteById: async (req, res, next) => {
     const id = req.params.id
     try {
-
       const searchHistory = await SearchHistoryModel.findByIdAndDelete(id)
 
       if (!searchHistory) {
@@ -104,7 +103,7 @@ const SearchHistoryController = {
     } catch (err) {
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(err)
     }
-  }
+  },
 }
 
 module.exports = SearchHistoryController

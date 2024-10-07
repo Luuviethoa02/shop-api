@@ -132,54 +132,68 @@ const AuthController = {
       )
 
       if (!user) {
-        return res
-          .status(StatusCodes.UNAUTHORIZED)
-          .json(
-            formatResponse(
-              StatusCodes.UNAUTHORIZED,
-              'Tài khoản không tồn tại !',
-              null
-            )
-          )
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+          statusCode: StatusCodes.UNAUTHORIZED,
+          message: 'Email không tồn tại !',
+          data: null,
+        })
       }
 
       const validPassword = await bcrypt.compare(
         req.body.password,
-        user.password
-      )
-
-      if (!validPassword) {
-        return res
-          .status(StatusCodes.UNAUTHORIZED)
-          .json(
-            formatResponse(
-              StatusCodes.UNAUTHORIZED,
-              'Mật khẩu không chính xác !',
-              null
-            )
-          )
-      }
-
-      if (user && validPassword) {
-        const { accessToken, refreshToken } = gennarateToken(user)
-        const { password, ...userResponse } = user._doc
-        const data = {
-          jwt: { accessToken, refreshToken },
-          user: userResponse,
+        user.password,
+        (err, result) => {
+          if (err)
+            return res.status(StatusCodes.UNAUTHORIZED).json({
+              statusCode: StatusCodes.UNAUTHORIZED,
+              message: 'Mật khẩu không chính xác !',
+              data: null,
+            })
+          if (result) {
+            const { accessToken, refreshToken } = gennarateToken(user)
+            const { password, ...userResponse } = user._doc
+            const data = {
+              jwt: { accessToken, refreshToken },
+              user: userResponse,
+            }
+            return res.status(StatusCodes.OK).json({
+              statusCode: StatusCodes.OK,
+              message: 'Đăng nhập thành công',
+              data: data,
+            })
+          }
         }
-        return res
-          .status(StatusCodes.OK)
-          .json(formatResponse(StatusCodes.OK, 'Đăng nhập thành công', data))
-      }
+      )
+      // console.log(validPassword, 'validPassword')
+
+      // if (!validPassword) {
+      //   return res.status(StatusCodes.UNAUTHORIZED).json({
+      //     statusCode: StatusCodes.UNAUTHORIZED,
+      //     message: 'Mật khẩu không chính xác !',
+      //     data: null,
+      //   })
+      // }
+
+      // if (user && validPassword) {
+      //   const { accessToken, refreshToken } = gennarateToken(user)
+      //   const { password, ...userResponse } = user._doc
+      //   const data = {
+      //     jwt: { accessToken, refreshToken },
+      //     user: userResponse,
+      //   }
+      //   return res.status(StatusCodes.OK).json({
+      //     statusCode: StatusCodes.OK,
+      //     message: 'Đăng nhập thành công',
+      //     data: data,
+      //   })
+      // }
     } catch (err) {
-      return res
-        .status(StatusCodes.INTERNAL_SERVER_ERROR)
-        .json(
-          formatResponse(
-            StatusCodes.INTERNAL_SERVER_ERROR,
-            err.message || 'Invalid request from server'
-          )
-        )
+      console.log(err)
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: err.message || 'Invalid request from server',
+        data: null,
+      })
     }
   },
   //GET USER
@@ -248,8 +262,8 @@ const AuthController = {
     try {
       const userId = req.params.userId
       const dataUpdate = req.body.data
-      const userUpdate = await UserModel.findOneAndUpdate(userId, dataUpdate,{
-        new:true
+      const userUpdate = await UserModel.findOneAndUpdate(userId, dataUpdate, {
+        new: true,
       })
       return res.status(StatusCodes.OK).json({
         statusCode: StatusCodes.OK,

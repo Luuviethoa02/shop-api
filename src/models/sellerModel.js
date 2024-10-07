@@ -34,14 +34,20 @@ const schema = new mongoose.Schema(
       type: String,
       default: '',
     },
-    follower: {
-      type: Number,
-      default: 0,
-    },
-    following: {
-      type: Number,
-      default: 0,
-    },
+    followers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'users',
+        default: null,
+      },
+    ],
+    followings: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'sellers',
+        default: null,
+      },
+    ],
     username: {
       type: String,
       required: true,
@@ -51,23 +57,23 @@ const schema = new mongoose.Schema(
       enum: ['wait', 'finished', 'rejected'],
       default: 'wait',
     },
-    express:{
+    express: {
       type: Boolean,
       default: true,
     },
-    fast:{
+    fast: {
       type: Boolean,
       default: true,
     },
-    economical:{
+    economical: {
       type: Boolean,
       default: true,
     },
-    bulkyGoods:{
+    bulkyGoods: {
       type: Boolean,
       default: true,
     },
-    businessType:{
+    businessType: {
       type: String,
       enum: ['personal', 'company', 'business'],
       default: 'personal',

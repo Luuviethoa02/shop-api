@@ -8,6 +8,7 @@ const {
   deleteOrderNotification,
   updateIsReadStatus,
 } = require('./orderNotificationController.js')
+const qs = require('qs')
 
 const OderController = {
   sendMail: (email, name, products) => {
@@ -243,11 +244,15 @@ const OderController = {
   getAllOdersByUserId: async (req, res, next) => {
     try {
       const userId = req.params.userId
-      const page = parseInt(req.query.page, 10) || 1
-      const limit = parseInt(req.query.limit, 10) || 10
+      const query = qs.parse(req.query)
+      const status = query.status
+      const page = query.page || 1
+      const limit = query.limit || 10
+
       const total = await OdersModel.find({
         user_id: userId,
       }).countDocuments()
+
       const odersFind = await OdersModel.find({
         user_id: userId,
       })
@@ -289,7 +294,7 @@ const OderController = {
             model: 'users',
           },
         })
-        .populate('sellerId','businessName')
+        .populate('sellerId', 'businessName')
 
       return res.status(StatusCodes.OK).json({
         total: total,
@@ -332,6 +337,7 @@ const OderController = {
         .json(StatusCodes.ReasonPhrases)
     }
   },
+  
   updateAddress: async (req, res) => {
     try {
       const id = req.params.id

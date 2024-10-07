@@ -77,7 +77,7 @@ const uploadMultipleImages = async (req, res, next) => {
     next()
   } catch (error) {
     console.error('Error during image upload:', error)
-    res
+   return res
       .status(500)
       .json({ message: 'Upload failed', error: error.message || error })
   }
@@ -94,13 +94,13 @@ const updateImageColor = async (req, res, next) => {
       next()
     }else{
       console.error('ENot found image update')
-      res
+     return res
         .status(500)
         .json({ message: 'Not found image update' })
     }
   } catch (error) {
     console.error('Error during image upload:', error)
-    res
+    return res
       .status(500)
       .json({ message: 'Upload failed', error: error.message || error })
   }
