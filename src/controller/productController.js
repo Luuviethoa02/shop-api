@@ -137,7 +137,6 @@ const ProductController = {
         .limit(limit)
         .exec()
 
-      const productDiscount = await DiscountModel.find()
 
       const newProduct = await Promise.all(
         products.map(async (product) => {
@@ -336,6 +335,8 @@ const ProductController = {
         ...sellerInfo._doc,
         totalProducts: productSellerTotal,
       }
+
+      // const statusFollower = sellerInfo
 
       const productDiscount = await DiscountModel.find({
         is_active: 'active',

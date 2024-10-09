@@ -9,7 +9,4 @@ router.post('/v1/payment',BankController.main)
 router.post('/v1/check-status-transaction',BankController.checkStatusTransaction)
 
 
-
-
-
 module.exports = router

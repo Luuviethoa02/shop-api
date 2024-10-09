@@ -36,16 +36,26 @@ const schema = new mongoose.Schema(
     },
     followers: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'users',
-        default: null,
+        _id: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'users',
+        },
+        createdAt: { 
+          type: Date, 
+          default: Date.now 
+        },
       },
     ],
     followings: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'sellers',
-        default: null,
+        _id: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'sellers',
+        },
+        createdAt: { 
+          type: Date, 
+          default: Date.now 
+        },
       },
     ],
     username: {

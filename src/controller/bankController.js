@@ -4,9 +4,13 @@ const crypto = require('crypto')
 const OdersModel = require('../models/oderModel.js')
 const OdersModelDetail = require('../models/oderDetailModel.js')
 var nodemailer = require('nodemailer')
+const {
+  addOrderNotification,
+  deleteOrderNotification,
+  updateIsReadStatus,
+} = require('./orderNotificationController.js')
 
 const BankController = {
-
   sendMail: (email, name, products) => {
     try {
       var transporter = nodemailer.createTransport({
@@ -99,6 +103,7 @@ const BankController = {
 
     const oder = req.body.oder
     const oderDetails = req.body.oderDetails
+    const io = req.io
 
     orderInfo = `Thanh toán ${oderDetails.length} đơn hàng tại cửa hàng trực tuyến Shopvh`
 
@@ -210,7 +215,7 @@ const BankController = {
             },
           })
         } catch (socketError) {
-          console.error(`Socket error for user ${comment.userId}:`, socketError)
+          console.error(`Socket error for user:`, socketError)
         }
       })
 
