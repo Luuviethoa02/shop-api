@@ -19,7 +19,20 @@ const ProductController = {
       const skip = (page - 1) * limit
       const total = await ProductModel.countDocuments().exec()
 
-      const products = await ProductModel.find()
+      const topProductSelling = await OdersDetailModel.aggregate([
+        {
+          $group: {
+            _id: '$productId',
+            total: { $sum: '$quantity' },
+          },
+        },
+      ])
+
+      const productIds = topProductSelling.map((item) => item._id)
+
+      const products = await ProductModel.find({
+        _id: { $in: productIds },
+      })
         .populate({
           path: 'brand_id',
         })
@@ -136,7 +149,6 @@ const ProductController = {
         .skip(skip)
         .limit(limit)
         .exec()
-
 
       const newProduct = await Promise.all(
         products.map(async (product) => {

@@ -41,6 +41,34 @@ const SellerController = {
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(err)
     }
   },
+  updateImage: async (req, res, next) => {
+    try {
+      const sellerId = req.params.sellerId
+      const dataUpate = {}
+      if (req.body.logo) {
+        dataUpate.logo = req.body.logo
+      }
+      if (req.body.img_cover) {
+        dataUpate.img_cover = req.body.img_cover
+      }
+      const dataUpdate = await SellerModel.findByIdAndUpdate(
+        sellerId,
+        dataUpate,
+        { new: true }
+      )
+      return res.status(StatusCodes.OK).json({
+        statusCode: StatusCodes.OK,
+        message: 'Cập nhật ảnh kênh bán hàng thành công',
+        data: dataUpdate,
+      })
+    } catch (error) {
+      console.error('Error during image upload:', error)
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        message: 'Upload failed',
+        error: error.message || error,
+      })
+    }
+  },
   getAll: async (req, res, next) => {
     try {
       const query = qs.parse(req.query)
@@ -96,19 +124,88 @@ const SellerController = {
         // Bước 2: Nhóm theo productId và đếm số lượng sản phẩm đã bán
         {
           $group: {
-            _id: '$productId', // Nhóm theo productId hoặc trường đại diện sản phẩm
-            quantity: { $sum: 1 }, // Đếm số lượng sản phẩm bán được
+            _id: '$productId', // Nhóm theo productId
+            quantity: { $sum: 1 }, // Đếm số lượng sản phẩm đã bán
           },
         },
         // Bước 3: Sắp xếp theo số lượng bán từ cao xuống thấp
         {
           $sort: { quantity: -1 },
         },
-        // Bước 4: Giới hạn số lượng sản phẩm trả về (nếu cần, ví dụ top 10)
+        // Bước 4: Giới hạn số lượng sản phẩm trả về (ví dụ: top 10)
         {
           $limit: 10,
         },
+        // Bước 5: Sử dụng $lookup để "populate" productId với thông tin sản phẩm
+        {
+          $lookup: {
+            from: 'products', // Tên collection chứa thông tin sản phẩm
+            localField: '_id', // Trường productId trong OdersDetailModel
+            foreignField: '_id', // Trường _id trong collection products
+            as: 'product', // Tên alias cho thông tin sản phẩm
+          },
+        },
+        // Bước 6: Dùng $unwind để chuyển mảng 'product' thành đối tượng
+        {
+          $unwind: '$product',
+        },
       ])
+
+      const newTopSellingProducts = await Promise.all(
+        topSellingProducts.map(async (product) => {
+          const productReview = await CommentsModel.find({
+            productId: product._id,
+          })
+
+          const numberRatings = productReview.reduce(
+            (pre, acc) => {
+              if (acc.rating === 5)
+                return { ...pre, five_rating: pre.five_rating + 1 }
+              if (acc.rating === 4)
+                return { ...pre, four_rating: pre.four_rating + 1 }
+              if (acc.rating === 3)
+                return { ...pre, three_rating: pre.three_rating + 1 }
+              if (acc.rating === 2)
+                return { ...pre, two_rating: pre.two_rating + 1 }
+              if (acc.rating === 1)
+                return { ...pre, one_rating: pre.one_rating + 1 }
+            },
+            {
+              five_rating: 0,
+              four_rating: 0,
+              three_rating: 0,
+              two_rating: 0,
+              one_rating: 0,
+            }
+          )
+          const total_point =
+            numberRatings.five_rating * 5 +
+            numberRatings.four_rating * 4 +
+            numberRatings.three_rating * 3 +
+            numberRatings.two_rating * 2 +
+            numberRatings.one_rating * 1
+
+          const total_rating =
+            numberRatings.five_rating +
+            numberRatings.four_rating +
+            numberRatings.three_rating +
+            numberRatings.two_rating +
+            numberRatings.one_rating
+
+          const average_rating =
+            Number(total_rating) === 0
+              ? 0
+              : Number(total_point) / Number(total_rating)
+
+          return {
+            ...product,
+            product: {
+              ...product.product,
+              average_rating,
+            },
+          }
+        })
+      )
 
       const commentRecents = await CommentsModel.find({
         sellerId: sellerInfo._id,
@@ -143,7 +240,7 @@ const SellerController = {
         ...sellerInfo._doc,
         user,
         totalProducts: productSellerTotal,
-        topSellingProducts,
+        topSellingProducts: newTopSellingProducts,
         commentRecents: commentsWithRelativeTime,
         productDiscountRecents,
       }
@@ -184,6 +281,108 @@ const SellerController = {
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(error)
     }
   },
+  getAnalystics: async (req, res, next) => {
+    try {
+      const sellerId = req.params.sellerId
+
+      const totalProducts = await ProductModel.find({
+        sellerId: sellerId,
+      }).countDocuments()
+
+      const totalOrdersPending = await OdersDetailModel.find(
+        {
+          sellerId: sellerId,
+          'status_oder.pending.status': true,
+        },
+        {
+          $sort: { createdAt: -1 },
+        }
+      ).countDocuments()
+
+      const totalOrdersShipping = await OdersDetailModel.find(
+        {
+          sellerId: sellerId,
+          'status_oder.shipping.status': true,
+        },
+        {
+          $sort: { createdAt: -1 },
+        }
+      ).countDocuments()
+
+      const totalOrdersSuccess = await OdersDetailModel.find(
+        {
+          sellerId: sellerId,
+          'status_oder.success.status': true,
+        },
+        {
+          $sort: { createdAt: -1 },
+        }
+      ).countDocuments()
+
+      const totalOrdersCanceled = await OdersDetailModel.find(
+        {
+          sellerId: sellerId,
+          'status_oder.canceled.status': true,
+        },
+        {
+          $sort: { createdAt: -1 },
+        }
+      ).countDocuments()
+
+      const totalComments = await CommentsModel.find({
+        sellerId: sellerId,
+      }).countDocuments()
+
+      const totalFollowers = await SellerModel.findById(sellerId).select(
+        'followers'
+      )
+
+      const revenueProducts = await OdersDetailModel.aggregate([
+        {
+          $match: {
+            sellerId: sellerId,
+            'status_oder.success.status': true,
+          },
+        },
+        {
+          $group: {
+            _id: {
+              year: { $year: { $toDate: '$createdAt' } },
+              month: { $month: { $toDate: '$createdAt' } },
+            },
+            totalRevenue: {
+              $sum: {
+                $multiply: ['$price', '$quantity'],
+              },
+            },
+          },
+        },
+        {
+          $sort: { '_id.year': 1, '_id.month': 1 },
+        },
+      ])
+
+      return res.status(StatusCodes.OK).json({
+        statusCode: StatusCodes.OK,
+        message: 'Lấy thông tin phân tích kênh bán hàng thành công',
+        data: {
+          totalProducts,
+          totalOrders: {
+            totalOrdersPending,
+            totalOrdersShipping,
+            totalOrdersSuccess,
+            totalOrdersCanceled,
+          },
+          totalComments,
+          totalFollowers: totalFollowers.followers.length,
+          revenueProducts,
+        },
+      })
+    } catch (error) {
+      console.log(error)
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(error)
+    }
+  },
   updateStatus: async (req, res, next) => {
     try {
       const sellerId = req.params.sellerId
@@ -208,7 +407,25 @@ const SellerController = {
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(error)
     }
   },
-  addFollower: async (req, res, next) => {
+  updateInfo: async (req, res, next) => {
+    try {
+      const sellerId = req.params.sellerId
+      const dataUpdate = await SellerModel.findByIdAndUpdate(
+        sellerId,
+        { $set: req.body },
+        { new: true}
+      )
+      return res.status(StatusCodes.OK).json({
+        statusCode: StatusCodes.OK,
+        message: 'Cập nhật thông tin kênh bán hàng thành công',
+        data: dataUpdate,
+      })
+    } catch (error) {
+      console.log(error)
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(error)
+    }
+  },
+  addFollower: async (req, res) => {
     try {
       const { sellerId, userId } = req.body
 

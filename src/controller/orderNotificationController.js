@@ -3,7 +3,6 @@ const OrderNotification = require('../models/orderNotificationModel.js')
 const { formatDistanceToNow } = require('date-fns')
 const { vi } = require('date-fns/locale')
 
-
 // Add a new notification
 const addOrderNotification = async (userId, orderDetailId, sellerId) => {
   try {
@@ -26,7 +25,11 @@ const deleteOrderNotification = async (req, res) => {
   try {
     const { id } = req.params
     await OrderNotification.findByIdAndDelete(id)
-    return res.status(200).json({ message: 'Notification deleted' })
+    return res.status(StatusCodes.OK).json({
+      message: 'Notification deleted successfully',
+      statusCode: StatusCodes.OK,
+      data: null,
+    })
   } catch (error) {
     return res
       .status(500)
@@ -58,6 +61,10 @@ const getAllOrderNotificationsBysellerId = async (req, res) => {
   const limit = parseInt(req.query.limit) || 10
   const skip = (page - 1) * limit
   try {
+    const total = await OrderNotification.find({
+      sellerId: sellerId,
+    }).countDocuments()
+
     const notifications = await OrderNotification.find({ sellerId: sellerId })
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -67,28 +74,29 @@ const getAllOrderNotificationsBysellerId = async (req, res) => {
         username: 1,
         img: 1,
       })
-      .populate('orderDetailId',{
+      .populate('orderDetailId', {
         _id: 1,
         quantity: 1,
         color: 1,
       })
 
-      const notificationsWithRelativeTime = notifications.map((notification) => ({
-        ...notification.toObject(),
-        relativeTime: formatDistanceToNow(new Date(notification.createdAt), {
-          addSuffix: true,
-          locale: vi,
-        }),
-      }))
-      
+    const notificationsWithRelativeTime = notifications.map((notification) => ({
+      ...notification.toObject(),
+      relativeTime: formatDistanceToNow(new Date(notification.createdAt), {
+        addSuffix: true,
+        locale: vi,
+      }),
+    }))
+
     return res.status(StatusCodes.OK).json({
-      message: 'Lấy thông báo thành công',
-      statusCode: StatusCodes.OK,
+      page,
+      limit,
+      total: total,
       data: notificationsWithRelativeTime,
     })
   } catch (error) {
-    console.log(error);
-    
+    console.log(error)
+
     return res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
       .json({ message: 'Error getting notifications', error })

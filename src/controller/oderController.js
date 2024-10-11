@@ -306,6 +306,34 @@ const OderController = {
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(error)
     }
   },
+  orderDetailId: async (req, res, next) => {
+    try {
+      const sellerId = req.params.sellerId
+      const orderDetailId = req.params.orderDetailId
+      const odersFind = await OdersModelDetail.find({
+        sellerId: sellerId,
+        _id: orderDetailId,
+      })
+        .populate({
+          path: 'oder_id',
+          select: 'address_id status_pay type_pay', // First, populate 'oder_id'
+          populate: {
+            path: 'user_id',
+            select: 'username img email',
+            model: 'users',
+          },
+        })
+        .populate('sellerId', 'businessName')
+        
+      return res.status(StatusCodes.OK).json({
+        statusCode: StatusCodes.OK,
+        message: 'Lấy chi tiết đơn hàng thành công',
+        data: odersFind,
+      })
+    } catch (err) {
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(err)
+    }
+  },
   getAllOdersCoditionByUserId: async (req, res, next) => {
     try {
       const userId = req.params.userId
@@ -337,7 +365,7 @@ const OderController = {
         .json(StatusCodes.ReasonPhrases)
     }
   },
-  
+
   updateAddress: async (req, res) => {
     try {
       const id = req.params.id

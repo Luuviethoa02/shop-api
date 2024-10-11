@@ -20,6 +20,11 @@ const schema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    productId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'products',
+      required: true,
+    },
     voucher: [
       {
         discount_code: {
@@ -125,14 +130,14 @@ const schema = new mongoose.Schema(
           default: null,
         },
         created_by: {
-          infoId:{
+          infoId: {
             type: String,
             default: null,
           },
-          shopper:{
+          shopper: {
             type: String,
             default: null,
-          }
+          },
         },
       },
     },
