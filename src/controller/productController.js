@@ -12,6 +12,89 @@ const { checkDateStatus } = require('../helpers/index')
 const CommentsModel = require('../models/commentsModel.js')
 
 const ProductController = {
+  getInfoProducts: async (products) => {
+    const newProducts = await Promise.all(
+      products.map(async (product) => {
+        const total = await Promise.all(
+          product.colors.map(async (color) => {
+            let total = 0
+            const totalColors = await OdersDetailModel.find({
+              'color._id': color._id,
+            })
+            if (totalColors.length > 0) {
+              total += totalColors.reduce((pre, acc) => pre + acc.quantity, 0)
+            }
+            return total
+          })
+        )
+        const productReview = await CommentsModel.find({
+          productId: product._id,
+        })
+
+        const numberRatings = productReview.reduce(
+          (pre, acc) => {
+            if (acc.rating === 5)
+              return { ...pre, five_rating: pre.five_rating + 1 }
+            if (acc.rating === 4)
+              return { ...pre, four_rating: pre.four_rating + 1 }
+            if (acc.rating === 3)
+              return { ...pre, three_rating: pre.three_rating + 1 }
+            if (acc.rating === 2)
+              return { ...pre, two_rating: pre.two_rating + 1 }
+            if (acc.rating === 1)
+              return { ...pre, one_rating: pre.one_rating + 1 }
+          },
+          {
+            five_rating: 0,
+            four_rating: 0,
+            three_rating: 0,
+            two_rating: 0,
+            one_rating: 0,
+          }
+        )
+        const total_point =
+          numberRatings.five_rating * 5 +
+          numberRatings.four_rating * 4 +
+          numberRatings.three_rating * 3 +
+          numberRatings.two_rating * 2 +
+          numberRatings.one_rating * 1
+
+        const total_rating =
+          numberRatings.five_rating +
+          numberRatings.four_rating +
+          numberRatings.three_rating +
+          numberRatings.two_rating +
+          numberRatings.one_rating
+
+        const average_rating =
+          Number(total_rating) === 0
+            ? 0
+            : Number(total_point) / Number(total_rating)
+
+        const totalSum = total.reduce((pre, acc) => pre + acc, 0) // Sum all the totals from colors
+
+        const productDiscount = await DiscountModel.find({
+          is_active: 'active',
+        })
+
+        const discount = productDiscount.find((discount) => {
+          return discount.productIds.includes(product._id)
+        })
+
+        if (discount) {
+          return {
+            ...product._doc,
+            total: totalSum,
+            discount:[discount],
+            average_rating,
+          }
+        }
+
+        return { ...product._doc, total: totalSum, average_rating }
+      })
+    )
+    return newProducts
+  },
   getAllProducts: async (req, res) => {
     try {
       const page = parseInt(req.query.page, 10) || 1
@@ -41,92 +124,13 @@ const ProductController = {
         .limit(limit)
         .exec()
 
-      const newProduct = await Promise.all(
-        products.map(async (product) => {
-          const total = await Promise.all(
-            product.colors.map(async (color) => {
-              let total = 0
-              const totalColors = await OdersDetailModel.find({
-                'color._id': color._id,
-              })
-              if (totalColors.length > 0) {
-                total += totalColors.reduce((pre, acc) => pre + acc.quantity, 0)
-              }
-              return total
-            })
-          )
-          const productReview = await CommentsModel.find({
-            productId: product._id,
-          })
-
-          const numberRatings = productReview.reduce(
-            (pre, acc) => {
-              if (acc.rating === 5)
-                return { ...pre, five_rating: pre.five_rating + 1 }
-              if (acc.rating === 4)
-                return { ...pre, four_rating: pre.four_rating + 1 }
-              if (acc.rating === 3)
-                return { ...pre, three_rating: pre.three_rating + 1 }
-              if (acc.rating === 2)
-                return { ...pre, two_rating: pre.two_rating + 1 }
-              if (acc.rating === 1)
-                return { ...pre, one_rating: pre.one_rating + 1 }
-            },
-            {
-              five_rating: 0,
-              four_rating: 0,
-              three_rating: 0,
-              two_rating: 0,
-              one_rating: 0,
-            }
-          )
-          const total_point =
-            numberRatings.five_rating * 5 +
-            numberRatings.four_rating * 4 +
-            numberRatings.three_rating * 3 +
-            numberRatings.two_rating * 2 +
-            numberRatings.one_rating * 1
-
-          const total_rating =
-            numberRatings.five_rating +
-            numberRatings.four_rating +
-            numberRatings.three_rating +
-            numberRatings.two_rating +
-            numberRatings.one_rating
-
-          const average_rating =
-            Number(total_rating) === 0
-              ? 0
-              : Number(total_point) / Number(total_rating)
-
-          const totalSum = total.reduce((pre, acc) => pre + acc, 0) // Sum all the totals from colors
-
-          const productDiscount = await DiscountModel.find({
-            is_active: 'active',
-          })
-
-          const discount = productDiscount.find((discount) => {
-            return discount.productIds.includes(product._id)
-          })
-
-          if (discount) {
-            return {
-              ...product._doc,
-              total: totalSum,
-              discount: discount.discount_percentage,
-              average_rating,
-            }
-          }
-
-          return { ...product._doc, total: totalSum, average_rating }
-        })
-      )
+      const newProducts = await ProductController.getInfoProducts(products)
 
       return res.status(StatusCodes.OK).json({
         page,
         limit,
         total,
-        data: newProduct,
+        data: newProducts,
       })
     } catch (err) {
       console.log(err)
@@ -325,6 +329,16 @@ const ProductController = {
   },
   getProudctDetailById: async (req, res, next) => {
     try {
+      const query = qs.parse(req.query)
+
+      const pageSimilar = parseInt(query.pageSimilar, 10) || 1
+      const limitSimilar = parseInt(query.limitSimilar, 10) || 8
+      const skipSimilar = (pageSimilar - 1) * limitSimilar
+
+      const pageCurrentShop = parseInt(query.pageCurrentShop, 10) || 1
+      const limitCurrentShop = parseInt(query.limitCurrentShop, 10) || 4
+      const skipCurrentShop = (pageCurrentShop - 1) * limitCurrentShop
+
       const productDetail = await ProductModel.findOne({
         slug: req.params.slug,
       }).populate({
@@ -335,9 +349,54 @@ const ProductController = {
 
       const productSimilars = await ProductModel.find({
         brand_id: productDetail.brand_id,
+        slug: { $ne: req.params.slug },
+      })
+        .populate('sellerId', 'city')
+        .skip(skipSimilar)
+        .limit(limitSimilar)
+        .exec()
+
+      const newProductSimilars = await ProductController.getInfoProducts(
+        productSimilars
+      )
+
+      const totalProductSimilars = await ProductModel.find({
+        brand_id: productDetail.brand_id,
+      }).countDocuments()
+
+      const totalQuantityShop = productDetail.colors.reduce(
+        (pre, acc) => pre + acc.quantity,
+        0
+      )
+
+      const productOrders = await OdersDetailModel.find({
+        productId: productDetail._id,
       })
 
+      const totalQuantityOrder = productOrders.reduce(
+        (pre, acc) => pre + acc.quantity,
+        0
+      )
+      const totalQuantity = totalQuantityShop - totalQuantityOrder
+
       const sellerInfo = await SellerModel.findById(productDetail.sellerId)
+
+      const productCurrentShops = await ProductModel.find({
+        sellerId: sellerInfo._id,
+        slug: { $ne: req.params.slug },
+      })
+        .populate('sellerId', 'city')
+        .skip(skipCurrentShop)
+        .limit(limitCurrentShop)
+        .exec()
+
+      const newProductCurrentShops = await ProductController.getInfoProducts(
+        productCurrentShops
+      )
+
+      const totalProductCurrentShop = await ProductModel.find({
+        sellerId: sellerInfo._id,
+      }).countDocuments()
 
       const productSellerTotal = await ProductModel.find({
         sellerId: sellerInfo._id,
@@ -381,14 +440,27 @@ const ProductController = {
         newSellerInfo.averageRating = 0
       }
 
-      productDetail.discount = productDiscount || null
-
       return res.status(StatusCodes.OK).json({
         code: StatusCodes.OK,
         message: 'Lấy chi tiết sản phẩm thành công',
         data: {
-          productDetail,
-          productSimilars,
+          productDetail: {
+            ...productDetail._doc,
+            totalQuantity,
+            discount: productDiscount || null,
+          },
+          productSimilars: {
+            page: pageSimilar,
+            limit: limitSimilar,
+            total: totalProductSimilars,
+            data: newProductSimilars,
+          },
+          productCurrentShops: {
+            page: pageCurrentShop,
+            limit: limitCurrentShop,
+            total: totalProductCurrentShop,
+            data: newProductCurrentShops,
+          },
           sellerInfo: newSellerInfo,
         },
       })
@@ -432,12 +504,19 @@ const ProductController = {
   },
   getProductBySlugCategory: async (req, res, next) => {
     try {
+      const slugCategory = req.params.slugCategory
       const query = qs.parse(req.query)
       const page = parseInt(query.page, 10) || 1
       const limit = parseInt(query.limit, 10) || 2
       const skip = (page - 1) * limit
 
-      let productFilter = {}
+      const brandProduct = await BrandModel.findOne({
+        slug: slugCategory,
+      })
+
+      let productFilter = {
+        brand_id: brandProduct._id,
+      }
 
       if (query?.categoris && Array.isArray(query.categoris)) {
         productFilter.brand_id = { $in: query.categoris }

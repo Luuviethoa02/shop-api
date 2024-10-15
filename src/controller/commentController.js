@@ -7,8 +7,8 @@ const UserModel = require('../models/userModel.js')
 const CommentsController = {
   addComments: async (req, res) => {
     try {
-      const { userId, productId, commentText, rating,sellerId } = req.body
-      const io = req.io // Lấy io từ req
+      const { userId, productId, commentText, rating, sellerId } = req.body
+      const io = req.io
 
       // Tạo và lưu bình luận mới
       const newComment = new CommentsModel({
@@ -18,9 +18,10 @@ const CommentsController = {
         comment: commentText,
         rating,
         notifications: [],
+        imgs: req.body.imgs || [],
       })
 
-      await newComment.save()
+      const result = await newComment.save()
 
       // Tìm tất cả các bình luận liên quan đến sản phẩm
       const existingComments = await CommentsModel.find({ productId })
@@ -73,9 +74,11 @@ const CommentsController = {
         console.error('Error handling notifications:', err)
       })
 
-      return res
-        .status(200)
-        .json({ message: 'Bình luận đã được đăng và thông báo đã được gửi' })
+      return res.status(StatusCodes.OK).json({
+        statusCode: StatusCodes.OK,
+        data: result,
+        message: 'Bình luận đã được thêm thành công',
+      })
     } catch (err) {
       console.error('Error while adding comment:', err)
       return res.status(500).json({
@@ -89,6 +92,7 @@ const CommentsController = {
       const { commentId } = req.params
       const comment = await CommentsModel.findByIdAndDelete(commentId).exec()
       return res.status(StatusCodes.OK).json({
+        statusCode: StatusCodes.OK,
         message: 'Bình luận đã được xóa thành công',
         data: comment,
       })
@@ -105,7 +109,46 @@ const CommentsController = {
       const page = parseInt(req.query.page, 10) || 1
       const limit = parseInt(req.query.limit, 10) || 2
       const skip = (page - 1) * limit
-      const total = await CommentsModel.countDocuments().exec()
+      const { rating } = req.query
+
+      if (rating) {
+        const total = await CommentsModel.find({ productId, rating })
+          .countDocuments()
+          .exec()
+
+        const comments = await CommentsModel.find({ productId, rating })
+          .sort({
+            createdAt: -1,
+          })
+          .populate('userId', {
+            _id: 1,
+            username: 1,
+            img: 1,
+          })
+          .select('-notifications -productId') // Loại bỏ trường 'notification' và 'productId
+          .skip(skip)
+          .limit(limit)
+          .exec()
+
+        const commentsWithRelativeTime = comments.map((comment) => ({
+          ...comment.toObject(),
+          relativeTime: formatDistanceToNow(new Date(comment.createdAt), {
+            addSuffix: true,
+            locale: vi,
+          }),
+        }))
+
+        return res.status(StatusCodes.OK).json({
+          page,
+          limit,
+          total,
+          data: commentsWithRelativeTime,
+        })
+      }
+
+      const total = await CommentsModel.find({ productId })
+        .countDocuments()
+        .exec()
 
       const comments = await CommentsModel.find({ productId })
         .sort({
@@ -118,7 +161,7 @@ const CommentsController = {
         })
         .select('-notifications -productId') // Loại bỏ trường 'notification' và 'productId
         .skip(skip)
-        .limit(total)
+        .limit(limit)
         .exec()
 
       const commentsWithRelativeTime = comments.map((comment) => ({

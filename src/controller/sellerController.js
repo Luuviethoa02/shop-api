@@ -10,6 +10,7 @@ const CommentsModel = require('../models/commentsModel.js')
 const DiscountModel = require('../models/discountCode')
 const { formatDistanceToNow } = require('date-fns')
 const { vi } = require('date-fns/locale')
+const ProductdModel = require('../models/productModel.js')
 
 const SellerController = {
   addSeller: async (req, res, next) => {
@@ -383,6 +384,63 @@ const SellerController = {
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(error)
     }
   },
+  topShops: async (req, res, next) => {
+    try {
+      const limit = req.query.limit || 5
+      const topShops = await SellerModel.find()
+        .sort({ followers: -1 })
+        .limit(limit)
+
+      const newResults = await Promise.all(
+        topShops.map(async (shop) => {
+          const productsTotal = await ProductdModel.find({
+            sellerId: shop._id,
+          }).countDocuments()
+
+          const totalReviews = await CommentsModel.aggregate([
+            // Bước 1: Lọc các comment theo sellerId
+            {
+              $match: { sellerId: shop._id },
+            },
+            // Bước 2: Tính tổng số sao và số lượng comment
+            {
+              $group: {
+                _id: null,
+                totalStars: { $sum: '$rating' }, 
+                totalComments: { $sum: 1 },
+              },
+            },
+          ])
+
+          if (totalReviews.length > 0) {
+            const { totalStars, totalComments } = totalReviews[0]
+            const averageRating = (totalStars / totalComments).toFixed(1)
+            return {
+              ...shop._doc,
+              productsTotal,
+              totalComments,
+              averageRating
+            }
+          } else {
+            return {
+              ...shop._doc,
+              productsTotal,
+              totalComments: 0,
+              averageRating: 0
+            }
+          }
+        })
+      )
+
+      return res.status(StatusCodes.OK).json({
+        statusCode: StatusCodes.OK,
+        message: 'get top shops thành công',
+        data: newResults,
+      })
+    } catch (error) {
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(error)
+    }
+  },
   updateStatus: async (req, res, next) => {
     try {
       const sellerId = req.params.sellerId
@@ -413,7 +471,7 @@ const SellerController = {
       const dataUpdate = await SellerModel.findByIdAndUpdate(
         sellerId,
         { $set: req.body },
-        { new: true}
+        { new: true }
       )
       return res.status(StatusCodes.OK).json({
         statusCode: StatusCodes.OK,

@@ -21,6 +21,11 @@ const schema = new mongoose.Schema({
       required: true, // Bắt buộc phải có nội dung bình luận
       unique : false
     },
+    imgs:{
+      type: Array,
+      required: true,
+      default: []
+    },
     rating: {
       type: Number, // Thay đổi kiểu dữ liệu nếu cần
       required: true, // Bắt buộc phải có rating
