@@ -8,11 +8,17 @@ const slugify = require('slugify')
 const OdersDetailModel = require('../models/oderDetailModel.js')
 const CommentsModel = require('../models/commentsModel.js')
 const DiscountModel = require('../models/discountCode')
-const { formatDistanceToNow } = require('date-fns')
+const { formatDistanceToNow, format } = require('date-fns')
 const { vi } = require('date-fns/locale')
 const ProductdModel = require('../models/productModel.js')
-
+const dateFnsTz = require('date-fns-tz')
 const SellerController = {
+  getMonthDate: (time) => {
+    const utcDate = new Date(time)
+    const options = { timeZone: 'Asia/Ho_Chi_Minh', month: 'long' }
+    const monthInEnglish = utcDate.toLocaleString('en-US', options)
+    return monthInEnglish
+  },
   addSeller: async (req, res, next) => {
     const { userId, ...data } = req.body
     try {
@@ -338,30 +344,107 @@ const SellerController = {
         'followers'
       )
 
-      const revenueProducts = await OdersDetailModel.aggregate([
-        {
-          $match: {
-            sellerId: sellerId,
-            'status_oder.success.status': true,
-          },
+      const statistics = await OdersDetailModel.find({
+        sellerId: sellerId,
+      })
+      const oderByMonth = {
+        January: {
+          pending: 0,
+          shipping: 0,
+          success: 0,
+          canceled: 0,
         },
-        {
-          $group: {
-            _id: {
-              year: { $year: { $toDate: '$createdAt' } },
-              month: { $month: { $toDate: '$createdAt' } },
-            },
-            totalRevenue: {
-              $sum: {
-                $multiply: ['$price', '$quantity'],
-              },
-            },
-          },
+        February: {
+          pending: 0,
+          shipping: 0,
+          success: 0,
+          canceled: 0,
         },
-        {
-          $sort: { '_id.year': 1, '_id.month': 1 },
+        March: {
+          pending: 0,
+          shipping: 0,
+          success: 0,
+          canceled: 0,
         },
-      ])
+        April: {
+          pending: 0,
+          shipping: 0,
+          success: 0,
+          canceled: 0,
+        },
+        May: {
+          pending: 0,
+          shipping: 0,
+          success: 0,
+          canceled: 0,
+        },
+        June: {
+          pending: 0,
+          shipping: 0,
+          success: 0,
+          canceled: 0,
+        },
+        July: {
+          pending: 0,
+          shipping: 0,
+          success: 0,
+          canceled: 0,
+        },
+        August: {
+          pending: 0,
+          shipping: 0,
+          success: 0,
+          canceled: 0,
+        },
+        September: {
+          pending: 0,
+          shipping: 0,
+          success: 0,
+          canceled: 0,
+        },
+        October: {
+          pending: 0,
+          shipping: 0,
+          success: 0,
+          canceled: 0,
+        },
+        November: {
+          pending: 0,
+          shipping: 0,
+          success: 0,
+          canceled: 0,
+        },
+        December: {
+          pending: 0,
+          shipping: 0,
+          success: 0,
+          canceled: 0,
+        },
+      }
+      statistics.forEach((item) => {
+        if (item.status_oder.pending.status) {
+          const month = SellerController.getMonthDate(
+            item.status_oder.pending.created_at
+          )
+          oderByMonth[month].pending += item.quantity
+        } else if (item.status_oder.shipping.status) {
+          const month = SellerController.getMonthDate(
+            item.status_oder.shipping.created_at
+          )
+          oderByMonth[month].shipping += item.quantity
+        } else if (item.status_oder.success.status) {
+          const month = SellerController.getMonthDate(
+            item.status_oder.success.created_at
+          )
+
+          oderByMonth[month].success += item.quantity
+        } else if (item.status_oder.canceled.status) {
+          const month = SellerController.getMonthDate(
+            item.status_oder.canceled.created_at
+          )
+          oderByMonth[month].canceled += item.quantity
+        }
+      })
 
       return res.status(StatusCodes.OK).json({
         statusCode: StatusCodes.OK,
@@ -376,7 +459,7 @@ const SellerController = {
           },
           totalComments,
           totalFollowers: totalFollowers.followers.length,
-          revenueProducts,
+          statistics: oderByMonth,
         },
       })
     } catch (error) {
@@ -406,7 +489,7 @@ const SellerController = {
             {
               $group: {
                 _id: null,
-                totalStars: { $sum: '$rating' }, 
+                totalStars: { $sum: '$rating' },
                 totalComments: { $sum: 1 },
               },
             },
@@ -419,14 +502,14 @@ const SellerController = {
               ...shop._doc,
               productsTotal,
               totalComments,
-              averageRating
+              averageRating,
             }
           } else {
             return {
               ...shop._doc,
               productsTotal,
               totalComments: 0,
-              averageRating: 0
+              averageRating: 0,
             }
           }
         })
